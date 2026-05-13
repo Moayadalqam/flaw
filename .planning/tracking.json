@@ -1,0 +1,41 @@
+{
+  "project": "Lex",
+  "client": "Fotini Kandri",
+  "type": "demo",
+  "assigned_to": "",
+  "team_id": "",
+  "project_id": "",
+  "git_remote": "",
+  "milestone": 1,
+  "milestone_name": "Demo — Cyprus Lawyers Invoicing Platform",
+  "milestones": [],
+  "phase": 2,
+  "phase_name": "UI Shell + i18n",
+  "total_phases": 6,
+  "status": "setup",
+  "wave": 3,
+  "tasks_done": 0,
+  "tasks_total": 0,
+  "verification": "pending",
+  "gap_cycles": {
+    "1": 0
+  },
+  "blockers": [],
+  "session_started_at": "2026-05-13T07:54:40.218Z",
+  "last_updated": "2026-05-13T09:22:15.952Z",
+  "last_pushed_at": "",
+  "last_commit": "",
+  "build_count": 1,
+  "deploy_count": 0,
+  "deployed_url": "",
+  "notes": "",
+  "submitted_by": "",
+  "lifetime": {
+    "tasks_completed": 4,
+    "phases_completed": 1,
+    "milestones_completed": 0,
+    "total_phases": 0,
+    "last_closed_milestone": 0
+  },
+  "report_seq": 0
+}
