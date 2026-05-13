@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Crimson_Pro, Inter_Tight } from "next/font/google";
+import { Crimson_Pro, Inter_Tight, JetBrains_Mono } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import { CommandBar } from "@/components/CommandBar";
@@ -16,6 +16,13 @@ const interTight = Inter_Tight({
   variable: "--font-inter-tight",
   subsets: ["latin", "latin-ext", "greek"],
   weight: ["400", "500", "600"],
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-jetbrains-mono",
+  subsets: ["latin"],
+  weight: ["400", "500"],
   display: "swap",
 });
 
@@ -36,7 +43,7 @@ export default async function RootLayout({
   return (
     <html
       lang={locale}
-      className={`${crimsonPro.variable} ${interTight.variable} h-full antialiased`}
+      className={`${crimsonPro.variable} ${interTight.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <NextIntlClientProvider locale={locale} messages={messages}>

@@ -33,6 +33,35 @@
   /* Spacing — fluid page padding */
   --pad-x:        clamp(1rem, 4vw, 3rem);
   --pad-section:  clamp(1.5rem, 5vw, 4rem);
+
+  /* Spacing scale — 8px grid (DESIGN.md §4) */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-24: 96px;
+  --pad-card:  1rem 1.25rem;
+  --gap-stack: 0.875rem;
+  --gap-grid:  1rem;
+
+  /* Elevation — OKLCH-tinted, 3 levels max (DESIGN.md §6) */
+  --elev-1: 0 1px 2px oklch(0.18 0.020 50 / 0.06);
+  --elev-2: 0 4px 12px oklch(0.18 0.020 50 / 0.10);
+  --elev-3: 0 12px 32px oklch(0.18 0.020 50 / 0.16);
+
+  /* Motion — easing + durations (DESIGN.md §7) */
+  --ease-out-quart: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out-expo:  cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-std:   cubic-bezier(0, 0, 0.2, 1);
+  --d-instant: 100ms;
+  --d-quick:   150ms;
+  --d-default: 200ms;
+  --d-section: 300ms;
+  --d-feature: 500ms;
 }
 
 @theme inline {
@@ -52,6 +81,7 @@
   --color-kill: var(--kill);
   --font-display: var(--font-crimson);
   --font-body: var(--font-inter-tight);
+  --font-mono: var(--font-jetbrains-mono);
 }
 
 html,
@@ -69,6 +99,15 @@ body {
 
 .font-display {
   font-family: var(--font-crimson), "Crimson Pro", Georgia, serif;
+}
+
+.mono {
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+}
+
+.prose {
+  max-width: 65ch;
 }
 
 /* Default selection colour matches accent */
