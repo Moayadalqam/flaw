@@ -1,0 +1,61 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "clients": "Clients",
+    "cases": "Cases",
+    "invoices": "Invoices",
+    "quotations": "Quotations",
+    "receipts": "Receipts",
+    "retainers": "Retainers",
+    "trust": "Trust",
+    "summary": "Summary"
+  },
+  "actions": {
+    "new": "New",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "back": "Back",
+    "signOut": "Sign out"
+  },
+  "empty": {
+    "clients": "No clients yet.",
+    "cases": "No cases yet.",
+    "invoices": "No invoices yet."
+  },
+  "confirm": {
+    "delete": "Confirm delete"
+  },
+  "error": {
+    "generic": "Something went wrong. Please try again."
+  },
+  "clients": {
+    "title": "Clients",
+    "name": "Name",
+    "vat": "VAT ID",
+    "language": "Language",
+    "billed": "Billed",
+    "trustBalance": "Trust balance"
+  },
+  "cases": {
+    "title": "Cases",
+    "matterNumber": "Number",
+    "matterType": "Type",
+    "status": "Status",
+    "client": "Client"
+  },
+  "invoices": {
+    "title": "Invoices",
+    "number": "Number",
+    "issued": "Issued",
+    "due": "Due",
+    "subtotal": "Subtotal",
+    "vat": "VAT",
+    "total": "Total"
+  },
+  "trust": {
+    "title": "Trust ledger",
+    "banner": "Client funds. Not lawyer revenue."
+  }
+}
