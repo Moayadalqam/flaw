@@ -1,26 +1,91 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Surfaces — warm ink-on-paper neutrals, tinted toward terracotta */
+  --bg:         oklch(0.985 0.004 60);
+  --bg-2:       oklch(0.965 0.006 60);
+  --surface:    oklch(0.945 0.008 60);
+  --surface-2:  oklch(0.920 0.010 60);
+
+  /* Text — warm near-black, never pure black */
+  --text:       oklch(0.18 0.012 50);
+  --muted:      oklch(0.45 0.012 50);
+  --dim:        oklch(0.62 0.010 50);
+
+  /* Lines */
+  --line:       oklch(0.86 0.010 60);
+  --line-soft:  oklch(0.92 0.008 60);
+
+  /* Accent — terracotta */
+  --accent:     oklch(0.55 0.150 35);
+  --accent-2:   oklch(0.48 0.155 35);
+  --accent-bg:  oklch(0.55 0.150 35 / 0.10);
+
+  /* Trust ledger — sage-olive (NEVER used outside the trust context) */
+  --trust:      oklch(0.45 0.060 145);
+  --trust-bg:   oklch(0.45 0.060 145 / 0.08);
+
+  /* Semantic */
+  --ok:    oklch(0.55 0.130 150);
+  --warn:  oklch(0.65 0.140 75);
+  --kill:  oklch(0.52 0.180 25);
+
+  /* Spacing — fluid page padding */
+  --pad-x:        clamp(1rem, 4vw, 3rem);
+  --pad-section:  clamp(1.5rem, 5vw, 4rem);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg: var(--bg);
+  --color-bg-2: var(--bg-2);
+  --color-surface: var(--surface);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-dim: var(--dim);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-bg: var(--accent-bg);
+  --color-trust: var(--trust);
+  --color-trust-bg: var(--trust-bg);
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --color-kill: var(--kill);
+  --font-display: var(--font-crimson);
+  --font-body: var(--font-inter-tight);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+html,
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-inter-tight), "Inter Tight", -apple-system, sans-serif;
+  font-feature-settings: "ss01", "cv11";
+}
+
+.tabular {
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+.font-display {
+  font-family: var(--font-crimson), "Crimson Pro", Georgia, serif;
+}
+
+/* Default selection colour matches accent */
+::selection {
+  background: var(--accent-bg);
+  color: var(--text);
+}
+
+/* Subtle scroll behaviour for anchor jumps in long pages */
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
