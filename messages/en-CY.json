@@ -34,7 +34,8 @@
   "empty": {
     "clients": "No clients yet.",
     "cases": "No cases yet.",
-    "invoices": "No invoices yet."
+    "invoices": "No invoices yet.",
+    "receipts": "No receipts yet — they post when you mark an invoice as paid."
   },
   "confirm": {
     "delete": "Confirm delete"
@@ -116,6 +117,21 @@
     "statusSent": "Sent",
     "statusPaid": "Paid",
     "statusVoid": "Void"
+  },
+  "receipts": {
+    "title": "Receipts",
+    "subtitle": "Αποδείξεις",
+    "number": "Receipt",
+    "invoice": "For invoice",
+    "client": "Client",
+    "paidAt": "Paid",
+    "method": "Method",
+    "amount": "Amount",
+    "back": "All receipts",
+    "openPdf": "Open PDF",
+    "openInvoice": "Open invoice",
+    "paymentReceived": "Payment received",
+    "footnote": "Receipts are issued automatically when an invoice is marked paid. Numbering is independent of invoice numbering."
   },
   "trust": {
     "title": "Trust ledger",

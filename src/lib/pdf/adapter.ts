@@ -198,6 +198,48 @@ export interface LexPdfInput {
 }
 
 // -----------------------------------------------------------------------------
+// Receipt input contract.
+//
+// A receipt is a thin acknowledgement that an invoice has been paid — Cyprus
+// VAT law treats it as a separate numbered document but does NOT require it to
+// itemize tax (tax is already itemized on the invoice it references). The
+// adapter therefore consumes a smaller shape than `LexPdfInput`: no line
+// items, no VAT breakdown, no draft state (receipts are issued once when
+// `markPaidAction` succeeds, never as drafts). The reference to the paid
+// invoice is the load-bearing field — auditors trace a receipt back to its
+// invoice by `invoice_number`, not by FK.
+// -----------------------------------------------------------------------------
+
+export interface LexPdfReceipt {
+  /** Allocated receipt number e.g. `R-2026/0001`. Always present (no drafts). */
+  receipt_number: string;
+  receipt_year: number;
+  /** ISO date string (YYYY-MM-DD) — when the payment landed. */
+  paid_at: string;
+  /** Receipt amount = invoice.total (paid in full). NUMERIC → number. */
+  amount: number;
+  /** Free-text payment method (e.g. "Bank transfer", "Cash"). Null = unspecified. */
+  payment_method: string | null;
+}
+
+/** The minimum invoice context a receipt PDF needs to reference its source. */
+export interface LexPdfReceiptInvoice {
+  /** Allocated number — receipts cannot reference a draft invoice. */
+  invoice_number: string;
+  invoice_year: number | null;
+  total: number;
+  currency: string;
+}
+
+export interface LexReceiptPdfInput {
+  workspace: LexPdfWorkspace;
+  client: LexPdfClient;
+  invoice: LexPdfReceiptInvoice;
+  receipt: LexPdfReceipt;
+  locale: LexLocale;
+}
+
+// -----------------------------------------------------------------------------
 // Render entry point — the SOLE export route handlers and server actions call.
 // -----------------------------------------------------------------------------
 
@@ -229,5 +271,28 @@ export async function renderInvoicePDF(
   // `renderToStream` requires `ReactElement<DocumentProps>` from the
   // `@react-pdf/renderer` namespace; `InvoiceDocument` always returns
   // `<Document>...</Document>` as its root, so the cast is sound.
+  return renderToStream(element as Parameters<typeof renderToStream>[0]);
+}
+
+/**
+ * Render a receipt to a Node `ReadableStream` of PDF bytes.
+ *
+ * Same seam discipline as `renderInvoicePDF`: pure data in, stream out, no
+ * Supabase, no env, no network. The fonts registered at module load (invariant
+ * #1) are reused — every Greek glyph on a receipt PDF rides the same Noto Sans
+ * subset Cyprus invoices use, so a single cold start warms both surfaces.
+ *
+ * The template module is imported lazily to keep this adapter cheap for any
+ * code path that imports `LexPdfTokens` or types but doesn't render. Cached by
+ * the Node loader on first call.
+ */
+export async function renderReceiptPDF(
+  input: LexReceiptPdfInput,
+): Promise<NodeJS.ReadableStream> {
+  const mod = (await import("./templates/ReceiptDocument")) as {
+    default: ComponentType<LexReceiptPdfInput>;
+  };
+  const ReceiptDocument = mod.default;
+  const element: ReactElement = createElement(ReceiptDocument, input);
   return renderToStream(element as Parameters<typeof renderToStream>[0]);
 }
