@@ -1,12 +1,5 @@
-import Link from "next/link";
 import { AppNav } from "@/components/AppNav";
-import {
-  CLIENTS,
-  INVOICES,
-  TRUST_LEDGER,
-  getMatter,
-  eur,
-} from "@/lib/demo-data";
+import { CLIENTS, INVOICES, TRUST_LEDGER, eur } from "@/lib/demo-data";
 
 export const metadata = { title: "Clients · Lex" };
 

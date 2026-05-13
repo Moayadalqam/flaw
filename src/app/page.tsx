@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Home() {
   return (
     <main className="min-h-screen flex flex-col">
@@ -16,10 +18,10 @@ export default function Home() {
             </span>
           </div>
           <nav className="hidden sm:flex items-center gap-1 text-sm">
-            <a href="/invoices" className="px-3 py-1.5 rounded text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--bg-2)] transition-colors">Invoices</a>
-            <a href="/receipts" className="px-3 py-1.5 rounded text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--bg-2)] transition-colors">Receipts</a>
-            <a href="/clients" className="px-3 py-1.5 rounded text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--bg-2)] transition-colors">Clients</a>
-            <a href="/trust-ledger" className="px-3 py-1.5 rounded text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--bg-2)] transition-colors">Trust ledger</a>
+            <Link href="/invoices" className="px-3 py-1.5 rounded text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--bg-2)] transition-colors">Invoices</Link>
+            <Link href="/receipts" className="px-3 py-1.5 rounded text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--bg-2)] transition-colors">Receipts</Link>
+            <Link href="/clients" className="px-3 py-1.5 rounded text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--bg-2)] transition-colors">Clients</Link>
+            <Link href="/trust-ledger" className="px-3 py-1.5 rounded text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--bg-2)] transition-colors">Trust ledger</Link>
             <a
               href="mailto:fawzi.ygoussous@gmail.com?subject=Lex%20—%20Cost%20proposal%20request"
               className="ml-2 px-3 py-1.5 rounded font-medium text-[var(--accent)] hover:bg-[var(--accent-bg)] transition-colors"
@@ -56,13 +58,13 @@ export default function Home() {
             </p>
 
             <div className="mt-10 flex flex-wrap gap-3">
-              <a
+              <Link
                 href="/invoices"
                 className="inline-flex items-center px-6 py-3 rounded-md font-medium text-white transition-colors"
                 style={{ background: "var(--accent)" }}
               >
                 Open the demo →
-              </a>
+              </Link>
               <a
                 href="mailto:fawzi.ygoussous@gmail.com?subject=Lex%20—%20Cost%20proposal%20request"
                 className="inline-flex items-center px-6 py-3 rounded-md font-medium border border-[var(--line)] text-[var(--text)] hover:bg-[var(--bg-2)] transition-colors"
