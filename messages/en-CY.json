@@ -4,11 +4,23 @@
     "clients": "Clients",
     "cases": "Cases",
     "invoices": "Invoices",
-    "quotations": "Quotations",
     "receipts": "Receipts",
+    "quotations": "Quotations",
     "retainers": "Retainers",
-    "trust": "Trust",
-    "summary": "Summary"
+    "trust": "Trust ledger",
+    "assistant": "Assistant",
+    "reports": "Reports",
+    "summary": "Summary",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
+  },
+  "common": {
+    "switchToEnglish": "English",
+    "switchToGreek": "Ελληνικά",
+    "language": "Language"
+  },
+  "auth": {
+    "signOut": "Sign out"
   },
   "actions": {
     "new": "New",
@@ -57,5 +69,15 @@
   "trust": {
     "title": "Trust ledger",
     "banner": "Client funds. Not lawyer revenue."
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "A short read of the practice today.",
+    "clientsLabel": "Clients",
+    "casesLabel": "Cases",
+    "invoicesLabel": "Finalized invoices",
+    "clientsHelp": "Total active clients",
+    "casesHelp": "Total open and closed cases",
+    "invoicesHelp": "Invoices past draft status"
   }
 }

@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Crimson_Pro, Inter_Tight } from "next/font/google";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages } from "next-intl/server";
 import { CommandBar } from "@/components/CommandBar";
 import "./globals.css";
 
@@ -23,19 +25,24 @@ export const metadata: Metadata = {
     "Cyprus-VAT-compliant invoices, receipts, quotations and retainers — bilingual Greek + English, billable hours by case, trust-ledger-aware. Built by Qualia Solutions.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
+  const messages = await getMessages();
+
   return (
     <html
-      lang="el-CY"
+      lang={locale}
       className={`${crimsonPro.variable} ${interTight.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        {children}
-        <CommandBar />
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          {children}
+          <CommandBar />
+        </NextIntlClientProvider>
       </body>
     </html>
   );
