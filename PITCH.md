@@ -5,7 +5,7 @@
 
 ## Live demo URL
 
-> **https://flaw-mjsfcpdrx-qualiasolutionscy.vercel.app**
+> **https://flaw-cpjeefdu4-qualiasolutionscy.vercel.app**
 
 Routes ready to walk through:
 - `/` — Lex landing (Greek-first headline, sample invoice card, 10 features, CTA)
