@@ -217,16 +217,13 @@ export interface LexPdfInput {
 export async function renderInvoicePDF(
   input: LexPdfInput,
 ): Promise<NodeJS.ReadableStream> {
-  // Wave-2 ordering pact: `./templates/InvoiceDocument` lands in Task 2 of
-  // Phase 3. Until then this module does not exist on disk and TypeScript
-  // cannot statically resolve it; the `ts-expect-error` is removed in Task 2
-  // when the template file appears. The dynamic import shape is the public
-  // contract Task 2 must satisfy: a default export of type
-  // `ComponentType<LexPdfInput>`.
-  const mod = (await import(
-    // @ts-expect-error TS2307 — './templates/InvoiceDocument' is created in Phase 3 Task 2.
-    "./templates/InvoiceDocument"
-  )) as { default: ComponentType<LexPdfInput> };
+  // The template module is loaded lazily so the adapter stays cheap to import
+  // from non-render code paths (e.g. tests that only need `LexPdfTokens`). The
+  // dynamic import shape is the public contract Task 2 satisfies: a default
+  // export of type `ComponentType<LexPdfInput>`.
+  const mod = (await import("./templates/InvoiceDocument")) as {
+    default: ComponentType<LexPdfInput>;
+  };
   const InvoiceDocument = mod.default;
   const element: ReactElement = createElement(InvoiceDocument, input);
   // `renderToStream` requires `ReactElement<DocumentProps>` from the
