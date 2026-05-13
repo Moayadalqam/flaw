@@ -3,6 +3,21 @@
 **Meeting:** 2026-05-13 (today)
 **Goal:** Fotini says "send me the cost proposal" — not "let me think about it."
 
+## Live demo URL
+
+> **https://flaw-16gn18f8s-qualiasolutionscy.vercel.app**
+
+Routes ready to walk through:
+- `/` — Lex landing (Greek-first headline, sample invoice card, 10 features, CTA)
+- `/invoices` — list of 3 finalized invoices, stats cards (count, billed, outstanding)
+- `/invoices/i01` — full Christodoulides invoice (Greek client name, VAT 19%, bilingual)
+- `/invoices/i02`, `/invoices/i03` — the other two seeded invoices
+- `/receipts` — Andreou's Bank-transfer receipt for invoice 2026/0001
+- `/clients` — all 10 seed clients, with billed + trust balance columns
+- `/trust-ledger` — sage-olive surface, banner "Client funds. Not lawyer revenue.", 2 deposits totalling €7.000
+
+**Note:** the data is static (matches the seed exactly). The buttons (New invoice, Mark as paid, Download PDF) are visual — clicking them does nothing yet. That's intentional for today: schema is locked, UI iterates next.
+
 ---
 
 ## Open (60 seconds)
