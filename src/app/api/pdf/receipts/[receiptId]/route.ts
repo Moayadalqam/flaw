@@ -49,11 +49,11 @@ import type { LexLocale } from "@/lib/format";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// RFC 4122 UUID format — receipt ids are `gen_random_uuid()` from Postgres.
-// Reject malformed ids before touching the database so a hostile client can't
-// flood logs with "no such row" entries from random strings.
+// UUID shape (any version) — receipt ids are `gen_random_uuid()` from Postgres
+// in production AND deterministic placeholder UUIDs from seed.sql (version
+// nibble `0`) in dev/seed. RLS workspace scoping handles invalid lookups → 404.
 const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // Locale guard: the invoice.language column is `'el' | 'en'` (Postgres enum
 // `preferred_language`), but the PDF template + format.ts surface speaks

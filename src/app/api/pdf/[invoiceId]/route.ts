@@ -48,11 +48,13 @@ import type { LexLocale } from "@/lib/format";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// RFC 4122 UUID format — invoice ids are `gen_random_uuid()` from Postgres.
-// We reject malformed ids before touching the database so a hostile client
-// can't flood logs with "no such row" entries from random strings.
+// UUID shape (any version) — invoice ids are `gen_random_uuid()` from Postgres
+// in production AND deterministic placeholder UUIDs from seed.sql (version
+// nibble `0`) in dev/seed. We accept any UUID-shaped string to avoid rejecting
+// the seed-data ids in dev/smoke tests. The Supabase fetch is workspace-scoped
+// via RLS — invalid ids return null and we 404.
 const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // Locale guard: the workspace.invoice.language column ships as `'el' | 'en'`
 // (Postgres enum `preferred_language`), but the PDF template + format.ts
