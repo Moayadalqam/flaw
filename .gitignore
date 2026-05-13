@@ -1,7 +1,12 @@
 # Dependencies
 node_modules/
 .pnp
-.pnp.js
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
 
 # Build output
 .next/
@@ -46,3 +51,6 @@ pnpm-debug.log*
 # Misc
 .turbo
 .cache
+*.tsbuildinfo
+next-env.d.ts
+*.pem
