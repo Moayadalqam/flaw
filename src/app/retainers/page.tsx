@@ -44,7 +44,7 @@ export default function RetainersPage() {
           </div>
 
           <div
-            className="mb-8 px-5 py-4 rounded-md border-l-4 bg-[var(--bg)]"
+            className="mb-8 px-5 py-4 rounded-md border bg-[var(--bg)]"
             style={{ borderColor: "var(--trust)" }}
           >
             <div className="grid sm:grid-cols-2 gap-6">
@@ -88,7 +88,7 @@ export default function RetainersPage() {
                 <article
                   key={r.id}
                   className="border border-[var(--line)] rounded-lg p-6 bg-[var(--bg)]"
-                  style={{ borderLeftWidth: 4, borderLeftColor: "var(--trust)" }}
+                  style={{ borderColor: "var(--trust)" }}
                 >
                   <div className="flex items-start justify-between gap-6 flex-wrap mb-3">
                     <div>

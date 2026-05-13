@@ -91,7 +91,7 @@ export function CommandBar() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder={placeholder}
-            className="flex-1 bg-transparent outline-none text-[var(--text)] text-base placeholder:text-[var(--dim)]"
+            className="flex-1 bg-transparent outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:[outline-color:var(--accent)] text-[var(--text)] text-base placeholder:text-[var(--dim)]"
           />
           <kbd className="hidden sm:block text-[10px] font-mono px-2 py-1 rounded bg-[var(--bg-2)] text-[var(--dim)] uppercase tracking-widest">
             ⏎

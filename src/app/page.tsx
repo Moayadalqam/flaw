@@ -178,7 +178,7 @@ export default function Home() {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-10">
             {FEATURES.map((f) => (
-              <article key={f.title} className="border-l-2 border-[var(--accent-bg)] pl-5">
+              <article key={f.title} className="border border-[var(--line-soft)] rounded-md p-5">
                 <h3 className="font-display text-lg text-[var(--text)] mb-2">
                   {f.title}
                 </h3>

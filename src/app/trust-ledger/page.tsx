@@ -15,7 +15,7 @@ export default function TrustLedgerPage() {
       <main className="w-full px-[var(--pad-x)] py-10" style={{ background: "var(--trust-bg)" }}>
         <div className="max-w-6xl mx-auto">
           <div
-            className="mb-6 px-5 py-4 rounded-md border-l-4 bg-[var(--bg)]"
+            className="mb-6 px-5 py-4 rounded-md border bg-[var(--bg)]"
             style={{ borderColor: "var(--trust)" }}
           >
             <div
