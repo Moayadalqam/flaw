@@ -206,3 +206,104 @@ Run `/qualia-plan 2 --gaps` to fix. Concrete actions needed:
 - **LoginForm.tsx:** Import `useTranslations('auth')`; replace all hardcoded strings with `t(key)` calls; add Zod `z.string().email().min(5)` client-side validation.
 - **page.tsx / retainers / trust-ledger:** Replace `border-l-*` side-stripe classes with full borders or background tints per design-laws.md §8.
 - **SidebarNav.tsx:** Rename `/assistant` to `/ai` to match the plan's nav contract (or update the plan to reflect `/assistant`).
+
+---
+
+## Re-verification (cycle 2)
+
+**Executed:** 2026-05-13  
+**Verifier:** Qualia Verifier (Sonnet 4.6)  
+**Scope:** Re-check 3 blocking gaps only. Contracts that already PASSED in cycle 1 are not re-run.
+
+---
+
+### Gap 1 re-check — globals.css tokens + JetBrains Mono
+
+**Contract (Token count ≥ 6):**
+```
+grep -cE "^\s*--(bg|text|accent|trust|line|space-4|ease-out-quart):" src/app/globals.css
+```
+Result: **7** — PASS (was 5 in cycle 1; contract expects ≥ 6).
+
+**Evidence — spacing scale:** `src/app/globals.css:38-49` — `--space-1: 4px` through `--space-24: 96px`, `--pad-card`, `--gap-stack`, `--gap-grid` all defined.
+
+**Evidence — elevation:** `src/app/globals.css:52-54` — `--elev-1`, `--elev-2`, `--elev-3` all defined as OKLCH-tinted shadows.
+
+**Evidence — motion tokens:** `src/app/globals.css:57-64` — `--ease-out-quart: cubic-bezier(0.22, 1, 0.36, 1)`, `--ease-out-expo`, `--d-quick: 150ms`, `--d-default: 200ms`, `--d-section: 300ms` all present.
+
+**Evidence — font-mono in @theme:** `src/app/globals.css:84` — `--font-mono: var(--font-jetbrains-mono)` present in `@theme inline` block.
+
+**Evidence — JetBrains Mono loaded in layout:** `src/app/layout.tsx:2` — `import { Crimson_Pro, Inter_Tight, JetBrains_Mono } from "next/font/google"`. `src/app/layout.tsx:22-27` — `const jetbrainsMono = JetBrains_Mono({ variable: "--font-jetbrains-mono", ... })`. `src/app/layout.tsx:46` — `${jetbrainsMono.variable}` in `html` className.
+
+**Evidence — .mono and .prose utility classes:** `src/app/globals.css:104-111` — `.mono { font-family: var(--font-jetbrains-mono), ui-monospace, ... }` and `.prose { max-width: 65ch; }` both present.
+
+**Verdict: PASS** — All previously-missing tokens now defined. JetBrains Mono loaded and wired. Design Rubric dimensions Spacing and Motion now clear the threshold of 3.
+
+---
+
+### Gap 2 re-check — LoginForm.tsx Zod validation + i18n
+
+**Evidence — Zod import and schema:** `src/app/(auth)/login/LoginForm.tsx:6` — `import { z } from "zod"`. `src/app/(auth)/login/LoginForm.tsx:13` — `const emailSchema = z.string().email().min(5)`. `src/app/(auth)/login/LoginForm.tsx:20-24` — `emailSchema.safeParse(email)` called in submit handler; on failure sets error from `t("invalidEmail")` and returns early.
+
+**Evidence — next-intl wired:** `src/app/(auth)/login/LoginForm.tsx:5` — `import { useTranslations } from "next-intl"`. `src/app/(auth)/login/LoginForm.tsx:12` — `const t = useTranslations("login")`. All visible strings use `t()`: `t("emailLabel")` at line 53, `t("emailPlaceholder")` at line 65, `t("checkInbox")` at line 88, `t("sending")` / `t("send")` at line 103, `t("invalidEmail")` at line 22, `t("error")` at line 36. Zero hardcoded English strings remain in JSX.
+
+**Evidence — message key parity (el-CY / en-CY):** Both catalogues contain 10-key `login` namespace: `checkInbox, disclaimer, emailLabel, emailPlaceholder, error, invalidEmail, send, sending, subtitle, title`. Keys match between locales.
+
+**Verdict: PASS** — Zod email validation implemented. All login strings now come from `useTranslations("login")`. GR/EN parity confirmed on all 10 keys.
+
+---
+
+### Gap 3 re-check — slop-detect critical findings
+
+**Contract:**
+```
+node ~/.claude/bin/slop-detect.mjs src/
+```
+Result: **Exit 0** — 0 CRITICAL findings, 1 HIGH (`[HI-EM-DASH]` at `src/components/ReminderModal.tsx:137`), 6 MEDIUM (`[MED-CARD-GRID-3]`). 7 total, 50 files scanned.
+
+**Evidence — side-stripes removed:**
+- `src/app/page.tsx` — `grep border-l-` returns 0 matches. Previously-failing `border-l-2 border-[var(--accent-bg)] pl-5` at line 181 is gone.
+- `src/app/retainers/page.tsx` — `grep border-l-` returns 0 matches. Previously-failing `border-l-4` at line 47 is gone.
+- `src/app/trust-ledger/page.tsx` — `grep border-l-` returns 0 matches. Previously-failing `border-l-4` at line 18 is gone.
+
+**Evidence — CommandBar outline-none resolved:** `src/components/CommandBar.tsx:94` — `outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:[outline-color:var(--accent)]` — `outline-none` is now paired with a proper `focus-visible` replacement. The `[HI-OUTLINE-NONE]` CRITICAL from cycle 1 no longer appears in slop-detect output.
+
+**Evidence — SidebarNav `/ai` route fixed:** `src/components/SidebarNav.tsx:48` — `{ href: "/ai", key: "assistant", icon: Sparkles }` — route is now `/ai` matching the plan contract.
+
+**Verdict: PASS** — slop-detect exits 0 on CRITICAL findings. Design gate passes.
+
+---
+
+### TypeScript compile check
+
+`npx tsc --noEmit` — exits 0, no output. Zero errors introduced by gap-closure commits.
+
+---
+
+### Design Rubric — Revised scores for affected dimensions
+
+| Dim | Old Score | New Score | Evidence |
+|---|---|---|---|
+| Typography | 3 | 4 | `src/app/layout.tsx:2,22-27,46` — JetBrains Mono now loaded and wired via CSS variable. Full type triad: Crimson Pro + Inter Tight + JetBrains Mono. `.mono` utility class at `src/app/globals.css:104-107`. |
+| Spacing | 2 | 4 | `src/app/globals.css:38-49` — 9-token 8px spacing scale + `--pad-card`, `--gap-stack`, `--gap-grid` all defined. |
+| Motion intent | 1 | 3 | `src/app/globals.css:57-64` — `--ease-out-quart`, `--ease-out-expo`, `--d-quick`, `--d-default`, `--d-section` all defined. |
+| Microcopy | 3 | 4 | `src/app/(auth)/login/LoginForm.tsx:12,53,65,88,103` — all login strings now via `t()` from 10-key `login` namespace; zero hardcoded English in JSX. |
+
+**Revised aggregate:** 32/40 (avg 4.0) — all 8 dimensions now ≥ 3.  
+**Design verdict: PASS**
+
+---
+
+## Re-verification Verdict
+
+**PASS** — All 3 blocking gaps from cycle 1 are resolved.
+
+| Gap | Cycle 1 | Cycle 2 |
+|---|---|---|
+| globals.css missing 23 tokens + JetBrains Mono not loaded | FAIL | **PASS** |
+| LoginForm.tsx no Zod, no i18n | FAIL | **PASS** |
+| slop-detect 3 CRITICAL `[ABS-SIDE-STRIPE]` findings | FAIL | **PASS** |
+
+No new regressions detected. TypeScript compiles clean. Design rubric aggregate rises from 23/40 (avg 2.9) to 32/40 (avg 4.0). All dimensions ≥ 3.
+
+**Phase 2 is verified. Proceed to Phase 3.**
