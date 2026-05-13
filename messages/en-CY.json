@@ -106,7 +106,16 @@
     "due": "Due",
     "subtotal": "Subtotal",
     "vat": "VAT",
-    "total": "Total"
+    "total": "Total",
+    "client": "Client",
+    "matter": "Case",
+    "status": "Status",
+    "new": "New invoice",
+    "statusDraft": "Draft",
+    "statusFinalized": "Finalized",
+    "statusSent": "Sent",
+    "statusPaid": "Paid",
+    "statusVoid": "Void"
   },
   "trust": {
     "title": "Trust ledger",
