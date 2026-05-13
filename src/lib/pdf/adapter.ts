@@ -274,6 +274,50 @@ export async function renderInvoicePDF(
   return renderToStream(element as Parameters<typeof renderToStream>[0]);
 }
 
+// -----------------------------------------------------------------------------
+// Quotation input contract.
+//
+// A quotation is a pre-engagement estimate that converts to a draft invoice
+// on acceptance (see `convert_quotation_to_invoice` SP in
+// `supabase/migrations/20260513000007_convert_quotation_to_invoice.sql`).
+// Renders like an invoice — same firm letterhead, same line-items table,
+// same totals block — but with three visible deltas the recipient must
+// recognise:
+//
+//   1. Header caption: "QUOTATION — NOT A TAX INVOICE" (or Greek
+//      equivalent) in Crimson Pro 700, color LexPdfTokens.muted (NOT kill —
+//      this is a normal document, not an error state).
+//   2. Right-rail meta swaps "Due" for "Valid until".
+//   3. Footer prints the verbatim "Quotation only — not a tax invoice.
+//      Becomes a draft invoice on acceptance." string per locale (mirrored
+//      from messages/{el,en}-CY.json quotations.notTaxInvoice).
+//
+// `quotation_number` is null on drafts (allocated on `markSentAction` as
+// `Q-YYYY/NNNN`). The template renders "DRAFT" in that case — no watermark
+// overlay, since the QUOTATION caption itself is the disclosure.
+// -----------------------------------------------------------------------------
+
+export interface LexPdfQuotation {
+  quotation_number: string | null;
+  quotation_year: number | null;
+  issued_at: string | null;
+  valid_until: string | null;
+  subtotal: number;
+  vat_amount: number;
+  total: number;
+  currency: string;
+  notes: string | null;
+  language: "el" | "en";
+}
+
+export interface LexQuotationPdfInput {
+  workspace: LexPdfWorkspace;
+  client: LexPdfClient;
+  quotation: LexPdfQuotation;
+  lineItems: LexPdfLineItem[];
+  locale: LexLocale;
+}
+
 /**
  * Render a receipt to a Node `ReadableStream` of PDF bytes.
  *
@@ -294,5 +338,29 @@ export async function renderReceiptPDF(
   };
   const ReceiptDocument = mod.default;
   const element: ReactElement = createElement(ReceiptDocument, input);
+  return renderToStream(element as Parameters<typeof renderToStream>[0]);
+}
+
+/**
+ * Render a quotation to a Node `ReadableStream` of PDF bytes.
+ *
+ * Same seam discipline as `renderInvoicePDF` and `renderReceiptPDF`: pure
+ * data in, stream out, no Supabase, no env, no network. The fonts
+ * registered at module load (invariant #1) are reused — every Greek glyph
+ * on a quotation PDF rides the same Noto Sans subset Cyprus invoices use,
+ * so a single cold start warms all three surfaces.
+ *
+ * The template module (`./templates/QuotationDocument`) is imported lazily
+ * to keep this adapter cheap for code paths that import `LexPdfTokens` or
+ * types but don't render. Cached by the Node loader on first call.
+ */
+export async function renderQuotationPDF(
+  input: LexQuotationPdfInput,
+): Promise<NodeJS.ReadableStream> {
+  const mod = (await import("./templates/QuotationDocument")) as {
+    default: ComponentType<LexQuotationPdfInput>;
+  };
+  const QuotationDocument = mod.default;
+  const element: ReactElement = createElement(QuotationDocument, input);
   return renderToStream(element as Parameters<typeof renderToStream>[0]);
 }

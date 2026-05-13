@@ -34,6 +34,11 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import {
+  computeTotalsFromItems,
+  roundCents,
+  toMoney,
+} from "@/lib/totals";
 import type { InvoiceRow, LineItemRow, ReceiptRow } from "@/lib/types";
 
 // Permissive UUID-shape regex (any version). Seed uses deterministic
@@ -41,7 +46,6 @@ import type { InvoiceRow, LineItemRow, ReceiptRow } from "@/lib/types";
 // which strict `z.uuid()` would reject.
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const DECIMAL_RE = /^\d+(\.\d{1,2})?$/;
-const VAT_RATE = 0.19; // Cyprus standard rate. DB stores NUMERIC(5,4) = 0.1900.
 
 // ---------------------------------------------------------------------------
 // Schemas
@@ -171,32 +175,6 @@ export type LineItemActionResult =
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-function roundCents(n: number): number {
-  return Math.round(n * 100) / 100;
-}
-
-function toMoney(n: number): string {
-  // NUMERIC(12,2) — keep two decimals as a string for the driver.
-  return roundCents(n).toFixed(2);
-}
-
-function computeTotalsFromItems(
-  items: { quantity: string; unit_price: string }[],
-): {
-  subtotal: number;
-  vatAmount: number;
-  total: number;
-  lineTotals: number[];
-} {
-  const lineTotals = items.map((li) =>
-    roundCents(parseFloat(li.quantity) * parseFloat(li.unit_price)),
-  );
-  const subtotal = roundCents(lineTotals.reduce((a, b) => a + b, 0));
-  const vatAmount = roundCents(subtotal * VAT_RATE);
-  const total = roundCents(subtotal + vatAmount);
-  return { subtotal, vatAmount, total, lineTotals };
-}
 
 async function recomputeInvoiceTotals(
   supabase: Awaited<ReturnType<typeof createClient>>,
