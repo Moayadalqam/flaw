@@ -2,28 +2,38 @@
 
 import { useState } from "react";
 import type { FormEvent } from "react";
+import { useTranslations } from "next-intl";
+import { z } from "zod";
 import { createClient } from "@/lib/supabase/client";
 
 type FormState = "idle" | "sending" | "sent" | "error";
 
 export function LoginForm() {
+  const t = useTranslations("login");
+  const emailSchema = z.string().email().min(5);
   const [email, setEmail] = useState("");
   const [state, setState] = useState<FormState>("idle");
   const [error, setError] = useState<string | null>(null);
 
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    const parsed = emailSchema.safeParse(email);
+    if (!parsed.success) {
+      setError(t("invalidEmail"));
+      setState("error");
+      return;
+    }
     setState("sending");
     setError(null);
     const supabase = createClient();
     const { error: err } = await supabase.auth.signInWithOtp({
-      email,
+      email: parsed.data,
       options: {
         emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     });
     if (err) {
-      setError(err.message);
+      setError(err.message || t("error"));
       setState("error");
       return;
     }
@@ -40,7 +50,7 @@ export function LoginForm() {
           className="block text-[10px] uppercase tracking-widest mb-2"
           style={{ color: "var(--dim)", letterSpacing: "0.08em" }}
         >
-          Email
+          {t("emailLabel")}
         </label>
         <input
           id="email"
@@ -52,7 +62,7 @@ export function LoginForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           disabled={disabled}
-          placeholder="you@firm.cy"
+          placeholder={t("emailPlaceholder")}
           aria-describedby={state === "error" ? "login-error" : undefined}
           className="w-full px-4 py-3 rounded-md transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:[outline-color:var(--accent)] focus-visible:[border-color:var(--accent)]"
           style={{
@@ -75,7 +85,7 @@ export function LoginForm() {
             border: "1px solid oklch(0.55 0.130 150 / 0.25)",
           }}
         >
-          Check your inbox. The magic link will land within 30 seconds.
+          {t("checkInbox")}
         </div>
       ) : (
         <button
@@ -90,7 +100,7 @@ export function LoginForm() {
             cursor: state === "sending" ? "wait" : "pointer",
           }}
         >
-          {state === "sending" ? "Sending…" : "Email me the magic link"}
+          {state === "sending" ? t("sending") : t("send")}
         </button>
       )}
 

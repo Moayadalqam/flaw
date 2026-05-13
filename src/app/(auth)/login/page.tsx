@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
 import { LoginForm } from "./LoginForm";
 
@@ -16,6 +17,7 @@ export default async function LoginPage() {
   if (user) {
     redirect("/dashboard");
   }
+  const t = await getTranslations("login");
 
   return (
     <div>
@@ -24,10 +26,10 @@ export default async function LoginPage() {
           className="font-display text-3xl tracking-tight"
           style={{ color: "var(--accent)", letterSpacing: "-0.025em" }}
         >
-          Lex
+          {t("title")}
         </div>
         <p className="text-sm mt-2" style={{ color: "var(--muted)" }}>
-          Sign in to your workspace.
+          {t("subtitle")}
         </p>
       </div>
       <LoginForm />
@@ -35,7 +37,7 @@ export default async function LoginPage() {
         className="text-xs text-center mt-8"
         style={{ color: "var(--dim)" }}
       >
-        A magic link will be emailed to you. No passwords, ever.
+        {t("disclaimer")}
       </p>
     </div>
   );

@@ -121,5 +121,17 @@
     "clientsHelp": "Total active clients",
     "casesHelp": "Total open and closed cases",
     "invoicesHelp": "Invoices past draft status"
+  },
+  "login": {
+    "title": "Lex",
+    "subtitle": "Sign in to your workspace.",
+    "emailLabel": "Email address",
+    "emailPlaceholder": "you@firm.cy",
+    "send": "Email me the magic link",
+    "sending": "Sending…",
+    "checkInbox": "Check your inbox. The magic link will land within 30 seconds.",
+    "error": "Something went wrong. Please try again.",
+    "invalidEmail": "Please enter a valid email address.",
+    "disclaimer": "A magic link will be emailed to you. No passwords, ever."
   }
 }
