@@ -82,6 +82,10 @@ run_sql supabase/tests/concurrent_numbering.sql -v "dsn=${DBLINK_DSN}"
 echo "==> revenue_isolation.sql"
 run_sql supabase/tests/revenue_isolation.sql
 
+echo "==> trust_isolation_check.sql"
+run_sql supabase/tests/trust_isolation_check.sql
+echo "[trust-isolation] PASS"
+
 echo "==> audit_coverage.sql"
 run_sql supabase/tests/audit_coverage.sql
 

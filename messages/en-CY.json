@@ -135,7 +135,67 @@
   },
   "trust": {
     "title": "Trust ledger",
-    "banner": "Client funds. Not lawyer revenue."
+    "banner": "Client funds. Not lawyer revenue.",
+    "entryKind": {
+      "deposit": "Deposit",
+      "feeTransfer": "Fee transfer",
+      "refund": "Refund",
+      "disbursement": "Disbursement",
+      "reversal": "Reversal"
+    },
+    "tableHeaders": {
+      "date": "Date",
+      "client": "Client",
+      "description": "Description",
+      "kind": "Kind",
+      "debit": "Debit",
+      "credit": "Credit",
+      "balance": "Balance"
+    },
+    "totalBalance": "Total balance",
+    "noEntries": "No trust ledger entries yet.",
+    "appendOnlyNote": "Postgres enforces immutability via `deny_trust_mutation()` row-level trigger and a TRUNCATE guard. Even the database service role cannot UPDATE or DELETE a row here.",
+    "balanceFootnote": "Balance shown is the per-client running balance after this entry."
+  },
+  "retainers": {
+    "title": "Retainers",
+    "new": "New retainer",
+    "client": "Client",
+    "matter": "Case",
+    "deposit": "Deposit",
+    "balance": "Balance",
+    "signed": "Signed",
+    "terms": "Terms",
+    "status": "Status",
+    "statusActive": "Active",
+    "statusDepleted": "Depleted",
+    "statusClosed": "Closed",
+    "trustBalanceLabel": "Trust balance — client funds",
+    "disbarmentNote": "Every retainer creates one append-only `trust_ledger` entry. Balances never appear on the revenue summary.",
+    "close": "Close retainer",
+    "closeConfirm": "Close this retainer? Status will change to closed."
+  },
+  "quotations": {
+    "title": "Quotations",
+    "number": "Number",
+    "issued": "Issued",
+    "validUntil": "Valid until",
+    "subtotal": "Subtotal",
+    "vat": "VAT",
+    "total": "Total",
+    "client": "Client",
+    "matter": "Case",
+    "status": "Status",
+    "new": "New quotation",
+    "statusDraft": "Draft",
+    "statusSent": "Sent",
+    "statusAccepted": "Accepted",
+    "statusDeclined": "Declined",
+    "statusExpired": "Expired",
+    "accept": "Accept & convert to invoice",
+    "acceptConfirm": "Accept this quotation and create a draft invoice?",
+    "convertedTo": "Converted to invoice",
+    "notTaxInvoice": "Quotation only — not a tax invoice. Becomes a draft invoice on acceptance."
   },
   "dashboard": {
     "title": "Dashboard",
