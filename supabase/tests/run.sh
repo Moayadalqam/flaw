@@ -85,4 +85,7 @@ run_sql supabase/tests/revenue_isolation.sql
 echo "==> audit_coverage.sql"
 run_sql supabase/tests/audit_coverage.sql
 
+echo "==> trust_truncate_guard.sql"
+run_sql supabase/tests/trust_truncate_guard.sql
+
 echo "ALL PASS"
