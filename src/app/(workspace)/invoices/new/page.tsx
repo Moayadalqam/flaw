@@ -2,8 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getLocale } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
-import { NewInvoiceForm } from "@/app/(workspace)/invoices/NewInvoiceForm";
-import type { ClientRow, MatterRow } from "@/lib/types";
+import {
+  NewInvoiceForm,
+  type DraftLine,
+} from "@/app/(workspace)/invoices/NewInvoiceForm";
+import type {
+  ClientRow,
+  MatterRow,
+  TimeEntryWithRelations,
+} from "@/lib/types";
 import type { LexLocale } from "@/lib/format";
 
 export const metadata: Metadata = {
@@ -12,9 +19,23 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-export default async function NewInvoicePage() {
+// Permissive UUID-shape regex — mirrors `(workspace)/invoices/actions.ts`.
+// Used here only to gate the `from_time_entry` prefill query.
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+interface NewInvoicePageProps {
+  searchParams: Promise<{
+    from_time_entry?: string | string[];
+  }>;
+}
+
+export default async function NewInvoicePage({
+  searchParams,
+}: NewInvoicePageProps) {
   const supabase = await createClient();
   const locale = (await getLocale()) as LexLocale;
+  const params = await searchParams;
 
   // Pull all clients + matters in the workspace; the form filters matters
   // client-side by selected client. Both queries are RLS-scoped.
@@ -35,6 +56,79 @@ export default async function NewInvoicePage() {
 
   const clients = clientsRes.data ?? [];
   const matters = mattersRes.data ?? [];
+
+  // ──────────────────────────────────────────────────────────────────────
+  // `from_time_entry` prefill (REQ-009 → invoice handoff)
+  //
+  // When the timer dashboard fires `billHoursAction(id)`, we land here with
+  // `?from_time_entry=<uuid>`. We RLS-fetch that entry (joined matter +
+  // matter.client) and build a one-row line-item prefill:
+  //   description = (entry.description || matter.title) + ' · ' + matter_number
+  //   quantity    = round(duration_seconds / 36) / 100        (2dp hours)
+  //   unit_price  = entry.hourly_rate
+  //   kind        = 'service'
+  // Plus pre-selected client + matter on the form.
+  //
+  // The hidden `from_time_entry` field is then carried through `<form>` to
+  // `createInvoiceAction`, which flips the time entry's status to 'billed'
+  // post-save (see invoices/actions.ts header).
+  // ──────────────────────────────────────────────────────────────────────
+  const rawFromTimeEntry = Array.isArray(params.from_time_entry)
+    ? params.from_time_entry[0]
+    : params.from_time_entry;
+  const fromTimeEntryId =
+    rawFromTimeEntry && UUID_RE.test(rawFromTimeEntry)
+      ? rawFromTimeEntry
+      : null;
+
+  let initialLineItems: DraftLine[] | undefined;
+  let initialClientId: string | undefined;
+  let initialMatterId: string | undefined;
+
+  if (fromTimeEntryId) {
+    const { data: entry } = await supabase
+      .from("time_entries")
+      .select(
+        "id, description, started_at, duration_seconds, hourly_rate, status, invoice_id, matter_id, matters!inner(matter_number, title, client_id)",
+      )
+      .eq("id", fromTimeEntryId)
+      .eq("status", "completed")
+      .is("invoice_id", null)
+      .maybeSingle<
+        Pick<
+          TimeEntryWithRelations,
+          | "id"
+          | "description"
+          | "started_at"
+          | "duration_seconds"
+          | "hourly_rate"
+          | "status"
+          | "invoice_id"
+          | "matter_id"
+          | "matters"
+        >
+      >();
+
+    if (entry && entry.matters) {
+      const seconds = entry.duration_seconds ?? 0;
+      // 5400s → 1.50 hours; the `/36 then /100` preserves 2dp without FP drift.
+      const hours = Math.round(seconds / 36) / 100;
+      const quantity = hours.toFixed(2);
+      const matterNumber = entry.matters.matter_number;
+      const descBase = entry.description ?? entry.matters.title;
+      const description = `${descBase} · ${matterNumber}`;
+
+      initialLineItems = [
+        {
+          description,
+          quantity,
+          unit_price: entry.hourly_rate,
+        },
+      ];
+      initialClientId = entry.matters.client_id;
+      initialMatterId = entry.matter_id;
+    }
+  }
 
   return (
     <div className="w-full max-w-4xl mx-auto">
@@ -72,6 +166,10 @@ export default async function NewInvoicePage() {
           clients={clients}
           matters={matters}
           locale={locale}
+          initialLineItems={initialLineItems}
+          initialClientId={initialClientId}
+          initialMatterId={initialMatterId}
+          fromTimeEntryId={fromTimeEntryId ?? undefined}
         />
       </div>
     </div>

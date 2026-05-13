@@ -30,7 +30,7 @@ type MatterPick = Pick<
 
 type ClientPick = Pick<ClientRow, "id" | "name_el" | "name_en">;
 
-interface DraftLine {
+export interface DraftLine {
   description: string;
   quantity: string;
   unit_price: string;
@@ -40,6 +40,22 @@ interface Props {
   clients: ClientPick[];
   matters: MatterPick[];
   locale: LexLocale;
+  /**
+   * Prefill seed for the line-item editor. Used by the
+   * `?from_time_entry=<uuid>` handoff from `/timer`: the server resolves
+   * the time entry → matter + client, builds one line item (hours × rate),
+   * and passes it here. Non-empty array seeds the editor; otherwise the
+   * editor starts with a single empty line as before.
+   */
+  initialLineItems?: DraftLine[];
+  initialClientId?: string;
+  initialMatterId?: string;
+  /**
+   * When set, the form serialises a hidden `from_time_entry` field so
+   * `createInvoiceAction` knows to flip the source time entry's status to
+   * `billed` and link its `invoice_id` to the newly-created invoice.
+   */
+  fromTimeEntryId?: string;
 }
 
 const VAT_RATE = 0.19;
@@ -53,19 +69,29 @@ function roundCents(n: number): number {
   return Math.round(n * 100) / 100;
 }
 
-export function NewInvoiceForm({ clients, matters, locale }: Props) {
+export function NewInvoiceForm({
+  clients,
+  matters,
+  locale,
+  initialLineItems,
+  initialClientId,
+  initialMatterId,
+  fromTimeEntryId,
+}: Props) {
   const router = useRouter();
   const isGreek = locale === "el-CY";
   const [isPending, startTransition] = useTransition();
   const [topError, setTopError] = useState<string | null>(null);
-  const [clientId, setClientId] = useState("");
-  const [matterId, setMatterId] = useState("");
+  const [clientId, setClientId] = useState(initialClientId ?? "");
+  const [matterId, setMatterId] = useState(initialMatterId ?? "");
   const [language, setLanguage] = useState<PreferredLanguage>("el");
   const [dueAt, setDueAt] = useState("");
   const [notes, setNotes] = useState("");
-  const [lines, setLines] = useState<DraftLine[]>([
-    { description: "", quantity: "1", unit_price: "" },
-  ]);
+  const [lines, setLines] = useState<DraftLine[]>(
+    initialLineItems && initialLineItems.length > 0
+      ? initialLineItems
+      : [{ description: "", quantity: "1", unit_price: "" }],
+  );
 
   const filteredMatters = useMemo(
     () => matters.filter((m) => !clientId || m.client_id === clientId),
@@ -132,6 +158,11 @@ export function NewInvoiceForm({ clients, matters, locale }: Props) {
     if (dueAt) fd.set("due_at", dueAt);
     if (notes) fd.set("notes", notes);
     fd.set("line_items", JSON.stringify(cleanLines));
+    if (fromTimeEntryId) {
+      // Carried through to `createInvoiceAction`, which flips the source
+      // time entry's status to 'billed' and sets its invoice_id post-save.
+      fd.set("from_time_entry", fromTimeEntryId);
+    }
     startTransition(async () => {
       const res = await createInvoiceAction(fd);
       handleResult(res as InvoiceActionResult);
@@ -140,6 +171,14 @@ export function NewInvoiceForm({ clients, matters, locale }: Props) {
 
   return (
     <form onSubmit={onSubmit} className="space-y-6">
+      {fromTimeEntryId ? (
+        <input
+          type="hidden"
+          name="from_time_entry"
+          value={fromTimeEntryId}
+          readOnly
+        />
+      ) : null}
       {topError ? (
         <div
           role="alert"

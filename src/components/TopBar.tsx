@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { Menu, X } from "lucide-react";
 import { LocaleToggle } from "@/components/LocaleToggle";
@@ -9,9 +9,11 @@ import { SidebarNav } from "@/components/SidebarNav";
 export function TopBar({
   workspaceName,
   userEmail,
+  activeTimerWidget,
 }: {
   workspaceName: string;
   userEmail: string | null;
+  activeTimerWidget?: ReactNode;
 }) {
   const t = useTranslations();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -70,6 +72,15 @@ export function TopBar({
               {userEmail}
             </span>
           )}
+          {/*
+            ActiveTimerWidget is a server component that fetches the current
+            user's active billable-hours timer (REQ-009). Rendered in the
+            workspace layout and passed in as a slot so the server data path
+            isn't blocked by TopBar's `"use client"` boundary. Positioned
+            left of the LocaleToggle so it stays visible at 768px without
+            wrapping.
+          */}
+          {activeTimerWidget}
           <LocaleToggle />
           <form action="/auth/sign-out" method="post">
             <button

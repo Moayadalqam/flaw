@@ -284,3 +284,54 @@ export interface QuotationWithRelations extends QuotationRow {
   clients: Pick<ClientRow, "name_el" | "name_en"> | null;
   matters: Pick<MatterRow, "matter_number" | "title"> | null;
 }
+
+// ---------------------------------------------------------------------------
+// Time entries (billable hours timer — REQ-009 / TIME-01)
+// ---------------------------------------------------------------------------
+// `time_entries` row mirrors Migration 001 lines 225–238. Three statuses:
+//   - 'active'    a running timer (started_at set, ended_at NULL,
+//                 duration_seconds NULL). Partial unique index
+//                 `idx_time_entries_one_active_per_user`
+//                 (workspace_id, user_id) WHERE status='active' enforces
+//                 at-most-one active timer per (workspace, user).
+//   - 'completed' the lawyer stopped the timer. `ended_at` and
+//                 `duration_seconds` are now set. `invoice_id` is still
+//                 NULL — the hours haven't been billed yet.
+//   - 'billed'    the time entry was rolled into an invoice line item;
+//                 `invoice_id` points at the consuming invoice. Cannot be
+//                 billed again (the dashboard hides the "Bill these hours"
+//                 action on these rows).
+//
+// Money column `hourly_rate` is NUMERIC(12,2) — string at the JS boundary.
+// `duration_seconds` is INT — number at the JS boundary (no precision risk).
+// ---------------------------------------------------------------------------
+
+export type TimeEntryStatus = "active" | "completed" | "billed";
+
+export interface TimeEntryRow {
+  id: string;
+  workspace_id: string;
+  matter_id: string;
+  user_id: string;
+  description: string | null;
+  started_at: string;
+  ended_at: string | null;
+  duration_seconds: number | null;
+  hourly_rate: string;
+  status: TimeEntryStatus;
+  invoice_id: string | null;
+  created_at: string;
+}
+
+/**
+ * A `TimeEntryRow` joined with the matter (`matter_number`, `title`,
+ * `client_id`) for the dashboard table + the bill-hours prefill (we need
+ * `client_id` to pre-select the client on `/invoices/new`).
+ */
+export interface TimeEntryWithRelations extends TimeEntryRow {
+  matters: Pick<
+    MatterRow,
+    "matter_number" | "title" | "client_id"
+  > | null;
+  invoices: Pick<InvoiceRow, "invoice_number"> | null;
+}

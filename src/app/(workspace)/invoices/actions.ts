@@ -27,6 +27,18 @@
  *   (the UNIQUE constraint will reject the second). Acceptable for the
  *   demo — promote to an `allocate_receipt_number()` SP in a later phase
  *   if/when concurrent receipt creation becomes load-bearing.
+ *
+ * Cross-cutting hook (Phase 4 Task 4 — billable hours timer):
+ *   `createInvoiceAction` reads an optional `from_time_entry` FormData
+ *   field (carried in by `NewInvoiceForm` when the user landed via
+ *   `/invoices/new?from_time_entry={uuid}` from `/timer`). When present
+ *   AND the invoice + line items inserts succeeded, we UPDATE the source
+ *   `time_entries` row to `status='billed'` and `invoice_id=<new id>` so
+ *   the same hours can never be billed twice. RLS auto-scopes the update;
+ *   deny-by-omission via `.select('id')` + `data.length === 0`. If the
+ *   update fails we `console.warn` and continue — we do NOT roll back
+ *   the invoice (Cyprus VAT bookkeeping doesn't allow a draft-then-delete
+ *   ping-pong, and the lawyer can manually unlink the time entry later).
  */
 
 import { revalidatePath } from "next/cache";
@@ -306,7 +318,45 @@ export async function createInvoiceAction(
     return { error: "insert_failed" };
   }
 
+  // ─────────────────────────────────────────────────────────────────────
+  // Cross-cutting hook (Phase 4 Task 4): flip the source time entry to
+  // `status='billed'` and link its `invoice_id` to this new invoice so
+  // the same hours can never be billed twice. RLS auto-scopes; we also
+  // require `status='completed'` and `invoice_id IS NULL` defensively.
+  // If the update fails (e.g. concurrent flip), we warn-and-continue —
+  // we do NOT roll back the invoice. Cyprus VAT bookkeeping doesn't
+  // allow draft-then-delete ping-pong; manual unlink is the fallback.
+  // ─────────────────────────────────────────────────────────────────────
+  const rawFromTimeEntry = formData.get("from_time_entry");
+  if (
+    typeof rawFromTimeEntry === "string" &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      rawFromTimeEntry,
+    )
+  ) {
+    const { data: timeUpd, error: timeErr } = await supabase
+      .from("time_entries")
+      .update({ status: "billed", invoice_id: invoiceId })
+      .eq("id", rawFromTimeEntry)
+      .eq("user_id", user.id)
+      .eq("status", "completed")
+      .is("invoice_id", null)
+      .select("id");
+    if (timeErr) {
+      console.warn(
+        "from_time_entry status flip failed (db error)",
+        timeErr.message,
+      );
+    } else if (!timeUpd || timeUpd.length === 0) {
+      console.warn(
+        "from_time_entry status flip matched 0 rows — race or RLS denial",
+        { invoiceId, fromTimeEntry: rawFromTimeEntry },
+      );
+    }
+  }
+
   revalidatePath("/invoices");
+  revalidatePath("/timer");
   redirect(`/invoices/${invoiceId}`);
 }
 

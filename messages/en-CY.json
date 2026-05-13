@@ -176,6 +176,27 @@
     "close": "Close retainer",
     "closeConfirm": "Close this retainer? Status will change to closed."
   },
+  "timer": {
+    "title": "Billable hours",
+    "activeNow": "Active now",
+    "start": "Start timer",
+    "stop": "Stop",
+    "matter": "Case",
+    "description": "Description",
+    "hourlyRate": "Hourly rate (€)",
+    "started": "Started",
+    "duration": "Duration",
+    "rate": "Rate",
+    "total": "Total",
+    "status": "Status",
+    "statusActive": "Active",
+    "statusCompleted": "Completed",
+    "statusBilled": "Billed",
+    "billTheseHours": "Bill these hours",
+    "alreadyBilled": "Already billed on invoice {number}",
+    "emptyState": "No completed hours yet. Start a timer on a case to begin.",
+    "timerAlreadyActive": "A timer is already running. Stop it first."
+  },
   "quotations": {
     "title": "Quotations",
     "number": "Number",
