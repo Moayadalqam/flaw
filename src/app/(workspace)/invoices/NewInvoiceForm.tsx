@@ -145,7 +145,7 @@ export function NewInvoiceForm({ clients, matters, locale }: Props) {
           role="alert"
           className="text-sm rounded-md border px-4 py-3"
           style={{
-            background: "oklch(0.52 0.180 25 / 0.08)",
+            background: "color-mix(in oklch, var(--kill) 8%, transparent)",
             borderColor: "var(--kill)",
             color: "var(--kill)",
           }}

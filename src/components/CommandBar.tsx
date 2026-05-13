@@ -62,14 +62,14 @@ export function CommandBar() {
       role="dialog"
       aria-modal="true"
       className="fixed inset-0 z-50 flex items-start justify-center pt-[12vh] px-4"
-      style={{ background: "oklch(0.18 0.012 50 / 0.45)" }}
+      style={{ background: "color-mix(in oklch, var(--text) 45%, transparent)" }}
       onClick={(e) => {
         if (e.target === e.currentTarget) close();
       }}
     >
       <div
         className="w-full max-w-2xl bg-[var(--bg)] border border-[var(--line)] rounded-lg overflow-hidden"
-        style={{ boxShadow: "0 24px 64px oklch(0.18 0.020 50 / 0.30)" }}
+        style={{ boxShadow: "var(--elev-3)" }}
       >
         <form
           onSubmit={(e) => {
@@ -123,7 +123,7 @@ export function CommandBar() {
               style={{
                 color: "var(--kill)",
                 borderColor: "var(--kill)",
-                background: "oklch(0.52 0.180 25 / 0.06)",
+                background: "color-mix(in oklch, var(--kill) 6%, transparent)",
               }}
             >
               {result.reason}
@@ -233,7 +233,7 @@ function CommandLauncher({ onOpen }: { onOpen: () => void }) {
       onClick={onOpen}
       aria-label="Open command bar"
       className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-4 py-2.5 rounded-full border border-[var(--line)] bg-[var(--bg)] text-sm text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--bg-2)] transition-colors"
-      style={{ boxShadow: "0 8px 24px oklch(0.18 0.020 50 / 0.14)" }}
+      style={{ boxShadow: "var(--elev-2)" }}
     >
       <span
         className="font-display text-sm"

@@ -164,7 +164,7 @@ export default async function InvoiceDetailPage({
         style={{
           borderColor: "var(--line)",
           background: "var(--bg)",
-          boxShadow: "0 4px 20px oklch(0.18 0.020 50 / 0.06)",
+          boxShadow: "var(--elev-2)",
         }}
       >
         {/* Letterhead */}

@@ -102,7 +102,7 @@ export function TopBar({
             aria-label={t("nav.closeMenu")}
             onClick={() => setDrawerOpen(false)}
             className="absolute inset-0 bg-black/30"
-            style={{ background: "oklch(0.18 0.020 50 / 0.35)" }}
+            style={{ background: "color-mix(in oklch, var(--text) 35%, transparent)" }}
           />
           {/* Drawer panel */}
           <div

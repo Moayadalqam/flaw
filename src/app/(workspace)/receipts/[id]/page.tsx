@@ -164,7 +164,7 @@ export default async function ReceiptDetailPage({
         style={{
           borderColor: "var(--line)",
           background: "var(--bg)",
-          boxShadow: "0 4px 20px oklch(0.18 0.020 50 / 0.06)",
+          boxShadow: "var(--elev-2)",
         }}
       >
         {/* Letterhead — same shape as the invoice detail so the two pages

@@ -101,7 +101,7 @@ export function ClientForm({ mode, initial }: Props) {
           role="alert"
           className="text-sm rounded-md border px-4 py-3"
           style={{
-            background: "oklch(0.52 0.180 25 / 0.08)",
+            background: "color-mix(in oklch, var(--kill) 8%, transparent)",
             borderColor: "var(--kill)",
             color: "var(--kill)",
           }}
@@ -245,7 +245,7 @@ export function ClientForm({ mode, initial }: Props) {
             className="inline-flex items-center min-h-[44px] px-4 py-2 rounded-md text-sm font-medium transition-colors disabled:opacity-60"
             style={{
               background: "var(--kill)",
-              color: "oklch(0.985 0.004 60)",
+              color: "var(--bg)",
             }}
           >
             {tActions("delete")}

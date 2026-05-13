@@ -401,7 +401,7 @@ export function TemplateSettingsForm({ initial, previewInvoiceId }: Props) {
               role="status"
               className="text-sm rounded-md border px-4 py-3"
               style={{
-                background: "oklch(0.85 0.05 145 / 0.18)",
+                background: "color-mix(in oklch, var(--trust) 18%, transparent)",
                 borderColor: "var(--ok)",
                 color: "var(--ok)",
               }}
@@ -414,7 +414,7 @@ export function TemplateSettingsForm({ initial, previewInvoiceId }: Props) {
               role="alert"
               className="text-sm rounded-md border px-4 py-3"
               style={{
-                background: "oklch(0.52 0.180 25 / 0.08)",
+                background: "color-mix(in oklch, var(--kill) 8%, transparent)",
                 borderColor: "var(--kill)",
                 color: "var(--kill)",
               }}

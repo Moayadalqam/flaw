@@ -17,15 +17,15 @@ const TONE_STYLES: Record<
   { background: string; color: string }
 > = {
   ok: {
-    background: "oklch(0.55 0.130 150 / 0.12)",
+    background: "color-mix(in oklch, var(--ok) 12%, transparent)",
     color: "var(--ok)",
   },
   warn: {
-    background: "oklch(0.65 0.140 75 / 0.12)",
+    background: "color-mix(in oklch, var(--warn) 12%, transparent)",
     color: "var(--warn)",
   },
   kill: {
-    background: "oklch(0.52 0.180 25 / 0.12)",
+    background: "color-mix(in oklch, var(--kill) 12%, transparent)",
     color: "var(--kill)",
   },
   muted: {

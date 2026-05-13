@@ -83,14 +83,14 @@ export function ReminderButton({ invoice }: { invoice: Invoice }) {
           role="dialog"
           aria-modal="true"
           className="fixed inset-0 z-50 flex items-start justify-center pt-[10vh] px-4"
-          style={{ background: "oklch(0.18 0.012 50 / 0.45)" }}
+          style={{ background: "color-mix(in oklch, var(--text) 45%, transparent)" }}
           onClick={(e) => {
             if (e.target === e.currentTarget) close();
           }}
         >
           <div
             className="w-full max-w-2xl bg-[var(--bg)] border border-[var(--line)] rounded-lg overflow-hidden"
-            style={{ boxShadow: "0 24px 64px oklch(0.18 0.020 50 / 0.30)" }}
+            style={{ boxShadow: "var(--elev-3)" }}
           >
             <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-[var(--line-soft)]">
               <div>
@@ -178,7 +178,7 @@ export function ReminderButton({ invoice }: { invoice: Invoice }) {
                   style={{
                     color: "var(--ok)",
                     borderColor: "var(--ok)",
-                    background: "oklch(0.55 0.130 150 / 0.06)",
+                    background: "color-mix(in oklch, var(--ok) 6%, transparent)",
                   }}
                 >
                   <div className="font-medium mb-1">Queued for sending</div>
@@ -194,7 +194,7 @@ export function ReminderButton({ invoice }: { invoice: Invoice }) {
                   style={{
                     color: "var(--kill)",
                     borderColor: "var(--kill)",
-                    background: "oklch(0.52 0.180 25 / 0.06)",
+                    background: "color-mix(in oklch, var(--kill) 6%, transparent)",
                   }}
                 >
                   {state.reason}
