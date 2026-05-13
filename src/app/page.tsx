@@ -15,12 +15,18 @@ export default function Home() {
               · by Qualia Solutions
             </span>
           </div>
-          <a
-            href="mailto:fawzi.ygoussous@gmail.com?subject=Lex%20—%20Cost%20proposal%20request"
-            className="text-sm font-medium text-[var(--text)] hover:text-[var(--accent)] transition-colors"
-          >
-            Contact →
-          </a>
+          <nav className="hidden sm:flex items-center gap-1 text-sm">
+            <a href="/invoices" className="px-3 py-1.5 rounded text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--bg-2)] transition-colors">Invoices</a>
+            <a href="/receipts" className="px-3 py-1.5 rounded text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--bg-2)] transition-colors">Receipts</a>
+            <a href="/clients" className="px-3 py-1.5 rounded text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--bg-2)] transition-colors">Clients</a>
+            <a href="/trust-ledger" className="px-3 py-1.5 rounded text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--bg-2)] transition-colors">Trust ledger</a>
+            <a
+              href="mailto:fawzi.ygoussous@gmail.com?subject=Lex%20—%20Cost%20proposal%20request"
+              className="ml-2 px-3 py-1.5 rounded font-medium text-[var(--accent)] hover:bg-[var(--accent-bg)] transition-colors"
+            >
+              Contact
+            </a>
+          </nav>
         </div>
       </header>
 
@@ -51,17 +57,17 @@ export default function Home() {
 
             <div className="mt-10 flex flex-wrap gap-3">
               <a
-                href="mailto:fawzi.ygoussous@gmail.com?subject=Lex%20—%20Cost%20proposal%20request"
+                href="/invoices"
                 className="inline-flex items-center px-6 py-3 rounded-md font-medium text-white transition-colors"
                 style={{ background: "var(--accent)" }}
               >
-                Request a cost proposal
+                Open the demo →
               </a>
               <a
-                href="#features"
+                href="mailto:fawzi.ygoussous@gmail.com?subject=Lex%20—%20Cost%20proposal%20request"
                 className="inline-flex items-center px-6 py-3 rounded-md font-medium border border-[var(--line)] text-[var(--text)] hover:bg-[var(--bg-2)] transition-colors"
               >
-                See what&apos;s inside
+                Request cost proposal
               </a>
             </div>
           </div>
