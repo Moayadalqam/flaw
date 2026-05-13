@@ -5,18 +5,33 @@
 
 ## Live demo URL
 
-> **https://flaw-16gn18f8s-qualiasolutionscy.vercel.app**
+> **https://flaw-mjsfcpdrx-qualiasolutionscy.vercel.app**
 
 Routes ready to walk through:
 - `/` — Lex landing (Greek-first headline, sample invoice card, 10 features, CTA)
-- `/invoices` — list of 3 finalized invoices, stats cards (count, billed, outstanding)
+- `/invoices` — 3 finalized invoices, stats cards (count, billed, outstanding)
 - `/invoices/i01` — full Christodoulides invoice (Greek client name, VAT 19%, bilingual)
-- `/invoices/i02`, `/invoices/i03` — the other two seeded invoices
+- `/quotations` — 3 quotations (sent / accepted / draft), with stats
+- `/quotations/q02` — accepted quote (5.355 €) ready to convert to invoice
 - `/receipts` — Andreou's Bank-transfer receipt for invoice 2026/0001
 - `/clients` — all 10 seed clients, with billed + trust balance columns
-- `/trust-ledger` — sage-olive surface, banner "Client funds. Not lawyer revenue.", 2 deposits totalling €7.000
+- `/trust-ledger` — sage-olive surface, banner "Client funds. Not lawyer revenue.", €7.000 in deposits
+- `/reports/summary` — monthly summary: revenue / paid / outstanding / overdue, by-client breakdown, aging table
 
-**Note:** the data is static (matches the seed exactly). The buttons (New invoice, Mark as paid, Download PDF) are visual — clicking them does nothing yet. That's intentional for today: schema is locked, UI iterates next.
+### The killer feature — AI command bar
+
+Press **⌘K** (or click "Ask Lex" bottom-right) anywhere on the site. Type:
+
+> Invoice Andreou for the divorce filing, €450, due in 14 days
+
+Lex parses the sentence, picks Andreas Andreou's matter from the workspace, computes VAT 19% server-side, and offers a finalize-able draft. The AI never picks the invoice number — that's earned by Finalize.
+
+Try variations during the demo:
+- *"Invoice Christodoulides 850 euros for hearing prep, due 30 days"* — works.
+- *"Invoice Smith for consultation, €200"* — works (default 14 days).
+- *"Bill someone €500"* — fails gracefully, asks for a client name.
+
+**Note:** the data is static (matches the seed exactly). The buttons (New invoice, Mark as paid, Download PDF, Finalize) are visual — clicking them confirms scope, doesn't mutate. That's intentional for today: schema is locked, UI iterates next.
 
 ---
 
