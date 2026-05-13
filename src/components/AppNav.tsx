@@ -5,8 +5,9 @@ const NAV = [
   { href: "/invoices", label: "Invoices" },
   { href: "/quotations", label: "Quotations" },
   { href: "/receipts", label: "Receipts" },
+  { href: "/retainers", label: "Retainers" },
   { href: "/clients", label: "Clients" },
-  { href: "/trust-ledger", label: "Trust ledger" },
+  { href: "/trust-ledger", label: "Trust" },
   { href: "/reports/summary", label: "Summary" },
 ];
 

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { AppNav } from "@/components/AppNav";
 import { CLIENTS, INVOICES, TRUST_LEDGER, eur } from "@/lib/demo-data";
 
@@ -52,12 +53,16 @@ export default function ClientsPage() {
                       className="border-t border-[var(--line-soft)] hover:bg-[var(--bg-2)] transition-colors"
                     >
                       <td className="px-5 py-4 text-[var(--text)]">
-                        <div className="font-medium">{c.nameEl}</div>
-                        {c.nameEl !== c.nameEn && (
-                          <div className="text-xs text-[var(--dim)]">
-                            {c.nameEn}
+                        <Link href={`/clients/${c.id}`} className="block">
+                          <div className="font-medium hover:text-[var(--accent)] transition-colors">
+                            {c.nameEl}
                           </div>
-                        )}
+                          {c.nameEl !== c.nameEn && (
+                            <div className="text-xs text-[var(--dim)]">
+                              {c.nameEn}
+                            </div>
+                          )}
+                        </Link>
                       </td>
                       <td className="px-5 py-4 text-[var(--muted)] tabular text-xs">
                         {c.vat ?? "—"}

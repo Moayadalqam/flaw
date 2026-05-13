@@ -21,6 +21,7 @@ export default function Home() {
             <Link href="/invoices" className="px-3 py-1.5 rounded text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--bg-2)] transition-colors">Invoices</Link>
             <Link href="/quotations" className="px-3 py-1.5 rounded text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--bg-2)] transition-colors">Quotations</Link>
             <Link href="/receipts" className="px-3 py-1.5 rounded text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--bg-2)] transition-colors">Receipts</Link>
+            <Link href="/retainers" className="px-3 py-1.5 rounded text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--bg-2)] transition-colors">Retainers</Link>
             <Link href="/clients" className="px-3 py-1.5 rounded text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--bg-2)] transition-colors">Clients</Link>
             <Link href="/trust-ledger" className="px-3 py-1.5 rounded text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--bg-2)] transition-colors">Trust ledger</Link>
             <Link href="/reports/summary" className="px-3 py-1.5 rounded text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--bg-2)] transition-colors">Summary</Link>

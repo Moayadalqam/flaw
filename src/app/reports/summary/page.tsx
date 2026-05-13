@@ -1,4 +1,5 @@
 import { AppNav } from "@/components/AppNav";
+import { ReminderButton } from "@/components/ReminderModal";
 import {
   INVOICES,
   RECEIPTS,
@@ -159,6 +160,7 @@ export default function MonthlySummary() {
                       <th className="text-left px-5 py-3 font-normal">Due</th>
                       <th className="text-right px-5 py-3 font-normal">Days late</th>
                       <th className="text-right px-5 py-3 font-normal">Amount</th>
+                      <th className="text-right px-5 py-3 font-normal">Action</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -192,6 +194,9 @@ export default function MonthlySummary() {
                           </td>
                           <td className="px-5 py-4 text-right text-[var(--text)] tabular">
                             {eur.format(inv.total)}
+                          </td>
+                          <td className="px-5 py-4 text-right">
+                            <ReminderButton invoice={inv} />
                           </td>
                         </tr>
                       );

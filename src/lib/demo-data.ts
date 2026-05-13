@@ -71,6 +71,18 @@ export type Receipt = {
   method: string;
 };
 
+export type Retainer = {
+  id: string;
+  number: string;
+  clientId: string;
+  matterId: string | null;
+  deposit: number;
+  status: "active" | "depleted" | "closed";
+  signedAt: string;
+  terms: string;
+  termsEl: string;
+};
+
 export type TrustEntry = {
   id: string;
   clientId: string;
@@ -222,6 +234,31 @@ export const RECEIPTS: Receipt[] = [
   },
 ];
 
+export const RETAINERS: Retainer[] = [
+  {
+    id: "ret01",
+    number: "2026-R-0001",
+    clientId: "c01",
+    matterId: "m01",
+    deposit: 2000,
+    status: "active",
+    signedAt: "2026-04-01",
+    terms: "Retainer for divorce matter — drawn down as billed.",
+    termsEl: "Καταπιστευτικό ποσό για υπόθεση διαζυγίου — αναλώνεται κατά τη χρέωση.",
+  },
+  {
+    id: "ret02",
+    number: "2026-R-0002",
+    clientId: "c10",
+    matterId: null,
+    deposit: 5000,
+    status: "active",
+    signedAt: "2026-04-05",
+    terms: "Initial deposit, no matter yet — trust-only.",
+    termsEl: "Αρχική κατάθεση, χωρίς υπόθεση ακόμα.",
+  },
+];
+
 export const TRUST_LEDGER: TrustEntry[] = [
   {
     id: "t01",
@@ -269,6 +306,70 @@ export function getInvoice(id: string): Invoice | undefined {
 
 export function getQuotation(id: string): Quotation | undefined {
   return QUOTATIONS.find((q) => q.id === id);
+}
+
+export function getRetainer(id: string): Retainer | undefined {
+  return RETAINERS.find((r) => r.id === id);
+}
+
+/**
+ * Mock AI-drafted bilingual reminder. If OpenRouter is wired (Phase 5),
+ * `/api/ai/reminder` replaces this with a real call.
+ */
+export function draftReminderEmail(invoice: Invoice): {
+  to: string | null;
+  subject: string;
+  body: string;
+  language: "el" | "en";
+} {
+  const client = getClient(invoice.clientId);
+  const matter = getMatter(invoice.matterId);
+  const lang = client?.language ?? "en";
+  const due = new Date(invoice.dueAt);
+  const today = new Date("2026-05-13");
+  const daysLate = Math.floor(
+    (today.getTime() - due.getTime()) / (1000 * 60 * 60 * 24),
+  );
+  if (lang === "el") {
+    return {
+      to: client?.email ?? null,
+      subject: `Υπενθύμιση πληρωμής — Τιμολόγιο ${invoice.number}`,
+      body: `Αγαπητέ/ή ${client?.nameEl ?? ""},
+
+Σας υπενθυμίζουμε ότι το τιμολόγιο ${invoice.number} με ημερομηνία λήξης ${due.toLocaleDateString("el-CY")} (${matter?.titleEl ?? ""}) παραμένει ανεξόφλητο.
+
+Συνολικό ποσό: ${eur.format(invoice.total)}
+Καθυστέρηση: ${daysLate} ημέρες
+
+Παρακαλούμε εξοφλήστε στον τραπεζικό λογαριασμό:
+IBAN CY17 0020 0128 0000 0012 0052 7600
+
+Είμαστε στη διάθεσή σας για οποιαδήποτε ερώτηση.
+
+Με εκτίμηση,
+Δικηγορικό γραφείο Φωτεινής Κάντρη`,
+      language: "el",
+    };
+  }
+  return {
+    to: client?.email ?? null,
+    subject: `Payment reminder — Invoice ${invoice.number}`,
+    body: `Dear ${client?.nameEn ?? ""},
+
+This is a friendly reminder that invoice ${invoice.number} dated ${due.toLocaleDateString("en-GB")} (${matter?.title ?? ""}) remains unpaid.
+
+Amount due: ${eur.format(invoice.total)}
+Days overdue: ${daysLate}
+
+Please settle to:
+IBAN CY17 0020 0128 0000 0012 0052 7600
+
+I'm available for any questions.
+
+Best regards,
+Fotini Kandri Law Office`,
+    language: "en",
+  };
 }
 
 /**
