@@ -35,7 +35,8 @@
     "clients": "No clients yet.",
     "cases": "No cases yet.",
     "invoices": "No invoices yet.",
-    "receipts": "No receipts yet — they post when you mark an invoice as paid."
+    "receipts": "No receipts yet — they post when you mark an invoice as paid.",
+    "quotations": "No quotations yet."
   },
   "confirm": {
     "delete": "Confirm delete"

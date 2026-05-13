@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
 import { ClientForm } from "@/app/(workspace)/clients/ClientForm";
+import { TrustBalanceCard } from "@/components/TrustBalanceCard";
 import type { ClientRow } from "@/lib/types";
 import type { LexLocale } from "@/lib/format";
 
@@ -94,6 +95,15 @@ export default async function ClientDetailPage({
           }}
         />
       </div>
+
+      {/*
+        TrustBalanceCard renders BELOW the form card in its own <section> —
+        NOT nested inside the form (container depth ≤ 2 per DESIGN.md).
+        Server-renders the running balance via RLS-scoped trust_ledger read.
+      */}
+      <section style={{ marginTop: "var(--space-8)" }}>
+        <TrustBalanceCard clientId={client.id} />
+      </section>
     </div>
   );
 }
