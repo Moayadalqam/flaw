@@ -48,14 +48,56 @@
     "vat": "VAT ID",
     "language": "Language",
     "billed": "Billed",
-    "trustBalance": "Trust balance"
+    "trustBalance": "Trust balance",
+    "created": "Created",
+    "new": "New client",
+    "edit": "Edit client",
+    "back": "All clients",
+    "empty": "No clients yet.",
+    "deleteConfirm": "Delete this client? This cannot be undone.",
+    "form": {
+      "nameEl": "Name (Greek)",
+      "nameElPlaceholder": "e.g. Νικόλας Χριστοδουλίδης",
+      "nameEn": "Name (English)",
+      "nameEnPlaceholder": "e.g. Nikolas Christodoulides",
+      "vatNumber": "VAT number",
+      "vatPlaceholder": "CY10000000A",
+      "taxId": "Tax ID",
+      "email": "Email",
+      "emailPlaceholder": "name@example.com",
+      "phone": "Phone",
+      "address": "Address",
+      "preferredLanguage": "Preferred language",
+      "languageEl": "Greek",
+      "languageEn": "English"
+    }
   },
   "cases": {
     "title": "Cases",
     "matterNumber": "Number",
     "matterType": "Type",
     "status": "Status",
-    "client": "Client"
+    "client": "Client",
+    "hourlyRate": "Hourly rate",
+    "new": "New case",
+    "edit": "Edit case",
+    "back": "All cases",
+    "empty": "No cases yet.",
+    "deleteConfirm": "Delete this case? This cannot be undone.",
+    "statusOpen": "Open",
+    "statusOnHold": "On hold",
+    "statusClosed": "Closed",
+    "form": {
+      "matterNumberPlaceholder": "2026-M-0001",
+      "title": "Title",
+      "titlePlaceholder": "e.g. Divorce — Papadopoulou",
+      "matterType": "Case type",
+      "matterTypePlaceholder": "divorce, immigration, property…",
+      "client": "Client",
+      "clientSelect": "Select a client",
+      "status": "Status",
+      "hourlyRate": "Hourly rate (€)"
+    }
   },
   "invoices": {
     "title": "Invoices",

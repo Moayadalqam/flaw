@@ -190,7 +190,7 @@ export function ReminderButton({ invoice }: { invoice: Invoice }) {
 
               {state.kind === "error" && (
                 <div
-                  className="text-sm px-4 py-3 rounded border-l-2"
+                  className="text-sm px-4 py-3 rounded border"
                   style={{
                     color: "var(--kill)",
                     borderColor: "var(--kill)",

@@ -48,14 +48,56 @@
     "vat": "ΑΦΜ",
     "language": "Γλώσσα",
     "billed": "Χρεωμένα",
-    "trustBalance": "Υπόλοιπο καταπιστεύματος"
+    "trustBalance": "Υπόλοιπο καταπιστεύματος",
+    "created": "Δημιουργήθηκε",
+    "new": "Νέος πελάτης",
+    "edit": "Επεξεργασία πελάτη",
+    "back": "Όλοι οι πελάτες",
+    "empty": "Δεν υπάρχουν πελάτες ακόμα.",
+    "deleteConfirm": "Σίγουρα θέλετε να διαγράψετε αυτόν τον πελάτη;",
+    "form": {
+      "nameEl": "Όνομα (Ελληνικά)",
+      "nameElPlaceholder": "π.χ. Νικόλας Χριστοδουλίδης",
+      "nameEn": "Όνομα (Αγγλικά)",
+      "nameEnPlaceholder": "e.g. Nikolas Christodoulides",
+      "vatNumber": "ΑΦΜ",
+      "vatPlaceholder": "CY10000000A",
+      "taxId": "ΑΦΤ",
+      "email": "Email",
+      "emailPlaceholder": "name@example.com",
+      "phone": "Τηλέφωνο",
+      "address": "Διεύθυνση",
+      "preferredLanguage": "Προτιμώμενη γλώσσα",
+      "languageEl": "Ελληνικά",
+      "languageEn": "Αγγλικά"
+    }
   },
   "cases": {
     "title": "Υποθέσεις",
     "matterNumber": "Αριθμός",
     "matterType": "Τύπος",
     "status": "Κατάσταση",
-    "client": "Πελάτης"
+    "client": "Πελάτης",
+    "hourlyRate": "Ωριαία χρέωση",
+    "new": "Νέα υπόθεση",
+    "edit": "Επεξεργασία υπόθεσης",
+    "back": "Όλες οι υποθέσεις",
+    "empty": "Δεν υπάρχουν υποθέσεις ακόμα.",
+    "deleteConfirm": "Σίγουρα θέλετε να διαγράψετε αυτή την υπόθεση;",
+    "statusOpen": "Ανοιχτή",
+    "statusOnHold": "Σε αναμονή",
+    "statusClosed": "Κλειστή",
+    "form": {
+      "matterNumberPlaceholder": "2026-M-0001",
+      "title": "Τίτλος",
+      "titlePlaceholder": "π.χ. Διαζύγιο — Παπαδοπούλου",
+      "matterType": "Τύπος υπόθεσης",
+      "matterTypePlaceholder": "divorce, immigration, property…",
+      "client": "Πελάτης",
+      "clientSelect": "Επιλέξτε πελάτη",
+      "status": "Κατάσταση",
+      "hourlyRate": "Ωριαία χρέωση (€)"
+    }
   },
   "invoices": {
     "title": "Τιμολόγια",
