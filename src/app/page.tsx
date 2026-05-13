@@ -61,7 +61,7 @@ export default function Home() {
                 href="#features"
                 className="inline-flex items-center px-6 py-3 rounded-md font-medium border border-[var(--line)] text-[var(--text)] hover:bg-[var(--bg-2)] transition-colors"
               >
-                See what's inside
+                See what&apos;s inside
               </a>
             </div>
           </div>
@@ -162,7 +162,7 @@ export default function Home() {
             What ships in Lex
           </p>
           <h2 className="font-display text-3xl md:text-4xl text-[var(--text)] mb-12 max-w-3xl tracking-tight">
-            Ten features the Cyprus invoicing tools you tried don't have.
+            Ten features the Cyprus invoicing tools you tried don&apos;t have.
           </h2>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-10">
@@ -218,7 +218,7 @@ export default function Home() {
             Want a cost proposal?
           </h2>
           <p className="text-[var(--muted)] mb-8 max-w-xl mx-auto">
-            Email Fawzi with your feature list. We'll come back within two
+            Email Fawzi with your feature list. We&apos;ll come back within two
             business days with scope, timeline, and a price.
           </p>
           <a
