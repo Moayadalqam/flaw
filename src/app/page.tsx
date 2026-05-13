@@ -17,11 +17,13 @@ export default function Home() {
               · by Qualia Solutions
             </span>
           </div>
-          <nav className="hidden sm:flex items-center gap-1 text-sm">
+          <nav className="hidden md:flex items-center gap-1 text-sm">
             <Link href="/invoices" className="px-3 py-1.5 rounded text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--bg-2)] transition-colors">Invoices</Link>
+            <Link href="/quotations" className="px-3 py-1.5 rounded text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--bg-2)] transition-colors">Quotations</Link>
             <Link href="/receipts" className="px-3 py-1.5 rounded text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--bg-2)] transition-colors">Receipts</Link>
             <Link href="/clients" className="px-3 py-1.5 rounded text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--bg-2)] transition-colors">Clients</Link>
             <Link href="/trust-ledger" className="px-3 py-1.5 rounded text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--bg-2)] transition-colors">Trust ledger</Link>
+            <Link href="/reports/summary" className="px-3 py-1.5 rounded text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--bg-2)] transition-colors">Summary</Link>
             <a
               href="mailto:fawzi.ygoussous@gmail.com?subject=Lex%20—%20Cost%20proposal%20request"
               className="ml-2 px-3 py-1.5 rounded font-medium text-[var(--accent)] hover:bg-[var(--accent-bg)] transition-colors"

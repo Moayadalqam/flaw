@@ -3,9 +3,11 @@ import Link from "next/link";
 const NAV = [
   { href: "/", label: "Lex", display: true },
   { href: "/invoices", label: "Invoices" },
+  { href: "/quotations", label: "Quotations" },
   { href: "/receipts", label: "Receipts" },
   { href: "/clients", label: "Clients" },
   { href: "/trust-ledger", label: "Trust ledger" },
+  { href: "/reports/summary", label: "Summary" },
 ];
 
 export function AppNav({ current }: { current?: string }) {

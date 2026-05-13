@@ -46,6 +46,22 @@ export type Invoice = {
   total: number;
 };
 
+export type Quotation = {
+  id: string;
+  number: string;
+  status: "draft" | "sent" | "accepted" | "declined";
+  clientId: string;
+  matterId: string;
+  issuedAt: string;
+  validUntil: string;
+  language: "el" | "en";
+  lineItems: LineItem[];
+  subtotal: number;
+  vatAmount: number;
+  total: number;
+  convertedInvoiceId?: string;
+};
+
 export type Receipt = {
   id: string;
   number: string;
@@ -142,6 +158,59 @@ export const INVOICES: Invoice[] = [
   },
 ];
 
+export const QUOTATIONS: Quotation[] = [
+  {
+    id: "q01",
+    number: "2026/Q-0001",
+    status: "sent",
+    clientId: "c04",
+    matterId: "m04",
+    issuedAt: "2026-05-02",
+    validUntil: "2026-06-02",
+    language: "el",
+    lineItems: [
+      { description: "Custody modification — drafting", quantity: 6, unitPrice: 190, total: 1140 },
+      { description: "Court appearance estimate", quantity: 3, unitPrice: 190, total: 570 },
+    ],
+    subtotal: 1710,
+    vatAmount: 324.9,
+    total: 2034.9,
+  },
+  {
+    id: "q02",
+    number: "2026/Q-0002",
+    status: "accepted",
+    clientId: "c05",
+    matterId: "m05",
+    issuedAt: "2026-04-28",
+    validUntil: "2026-05-28",
+    language: "en",
+    lineItems: [
+      { description: "Corporate restructuring — diligence", quantity: 8, unitPrice: 250, total: 2000 },
+      { description: "Restructuring agreement drafting", quantity: 10, unitPrice: 250, total: 2500 },
+    ],
+    subtotal: 4500,
+    vatAmount: 855,
+    total: 5355,
+  },
+  {
+    id: "q03",
+    number: "2026/Q-0003",
+    status: "draft",
+    clientId: "c08",
+    matterId: "m04",
+    issuedAt: "2026-05-10",
+    validUntil: "2026-06-10",
+    language: "el",
+    lineItems: [
+      { description: "Initial consultation", quantity: 2, unitPrice: 200, total: 400 },
+    ],
+    subtotal: 400,
+    vatAmount: 76,
+    total: 476,
+  },
+];
+
 export const RECEIPTS: Receipt[] = [
   {
     id: "r01",
@@ -196,4 +265,106 @@ export function getMatter(id: string): Matter | undefined {
 
 export function getInvoice(id: string): Invoice | undefined {
   return INVOICES.find((i) => i.id === id);
+}
+
+export function getQuotation(id: string): Quotation | undefined {
+  return QUOTATIONS.find((q) => q.id === id);
+}
+
+/**
+ * Fake AI parse — keyword/regex match on a natural-language invoice request.
+ * Returns a draft invoice shape if recognisable, or an error string.
+ * Real Lex hits OpenRouter with structured-output mode and Zod validation.
+ */
+export type DraftSuggestion = {
+  client: Client;
+  matter: Matter;
+  description: string;
+  amount: number;
+  dueDays: number;
+  subtotal: number;
+  vatAmount: number;
+  total: number;
+};
+
+export function parseInvoiceRequest(
+  input: string,
+): { ok: true; draft: DraftSuggestion } | { ok: false; reason: string } {
+  const text = input.trim();
+  if (text.length < 10) {
+    return { ok: false, reason: "Tell me which client, what amount, and the due date." };
+  }
+
+  // Try to find a client — match any seed surname (Greek or English).
+  const haystack = text.toLowerCase();
+  const client =
+    CLIENTS.find((c) => {
+      const surnameEn = c.nameEn.split(" ").pop()?.toLowerCase() ?? "";
+      const fullEn = c.nameEn.toLowerCase();
+      const surnameEl = c.nameEl.split(" ").pop()?.toLowerCase() ?? "";
+      const fullEl = c.nameEl.toLowerCase();
+      return (
+        (surnameEn.length > 3 && haystack.includes(surnameEn)) ||
+        (fullEn.length > 4 && haystack.includes(fullEn)) ||
+        (surnameEl.length > 3 && haystack.includes(surnameEl)) ||
+        (fullEl.length > 4 && haystack.includes(fullEl))
+      );
+    }) ?? null;
+
+  if (!client) {
+    return {
+      ok: false,
+      reason:
+        "I couldn't pick a client from your list. Try: \"Invoice Andreou for the divorce filing, €450, due in 14 days\".",
+    };
+  }
+
+  // Amount — match €XX or EUR XX or "XX euros" or just a number.
+  const amountMatch =
+    text.match(/€\s*([\d.,]+)/) ||
+    text.match(/EUR\s*([\d.,]+)/i) ||
+    text.match(/([\d.,]+)\s*€/) ||
+    text.match(/([\d.,]+)\s*eur(?:os)?/i) ||
+    text.match(/\b(\d{2,5}(?:[.,]\d{2})?)\b/);
+  if (!amountMatch) {
+    return {
+      ok: false,
+      reason: "I see the client, but no amount. Add something like \"€450\".",
+    };
+  }
+  const amount = parseFloat(amountMatch[1].replace(/[.,](\d{2})$/, ".$1").replace(/[,.](?=\d{3})/g, ""));
+  if (Number.isNaN(amount) || amount <= 0) {
+    return { ok: false, reason: "I couldn't parse the amount." };
+  }
+
+  // Due days — "due in N days" / "in N days" / "N days"
+  const dueMatch =
+    text.match(/due\s+in\s+(\d+)\s*days?/i) ||
+    text.match(/in\s+(\d+)\s*days?/i) ||
+    text.match(/(\d+)\s*days?/i);
+  const dueDays = dueMatch ? parseInt(dueMatch[1], 10) : 14;
+
+  // Description — try to lift the "for X" clause.
+  const forMatch = text.match(/for\s+the\s+([^,€.]+?)(?:\s*[,€]|$)/i) || text.match(/for\s+([^,€.]+?)(?:\s*[,€]|$)/i);
+  const description = forMatch ? forMatch[1].trim() : "Legal services";
+
+  // Match a matter belonging to this client if possible.
+  const matter =
+    MATTERS.find((m) => m.clientId === client.id) ??
+    MATTERS[0];
+
+  const vatAmount = +(amount * 0.19).toFixed(2);
+  return {
+    ok: true,
+    draft: {
+      client,
+      matter,
+      description: description.charAt(0).toUpperCase() + description.slice(1),
+      amount,
+      dueDays,
+      subtotal: amount,
+      vatAmount,
+      total: +(amount + vatAmount).toFixed(2),
+    },
+  };
 }

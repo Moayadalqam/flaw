@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Crimson_Pro, Inter_Tight } from "next/font/google";
+import { CommandBar } from "@/components/CommandBar";
 import "./globals.css";
 
 const crimsonPro = Crimson_Pro({
@@ -32,7 +33,10 @@ export default function RootLayout({
       lang="el-CY"
       className={`${crimsonPro.variable} ${interTight.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {children}
+        <CommandBar />
+      </body>
     </html>
   );
 }
