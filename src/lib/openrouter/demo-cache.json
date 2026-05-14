@@ -1,0 +1,55 @@
+{
+  "invoice andreou for the divorce filing, €450, due in 14 days": {
+    "kind": "draft",
+    "draft": {
+      "client_id": "00000000-0000-0000-0000-000000000c03",
+      "matter_id": "00000000-0000-0000-0000-0000000a0003",
+      "line_items": [
+        {
+          "description": "Divorce filing — case preparation",
+          "quantity": 1,
+          "unit_price": 450
+        }
+      ],
+      "due_days": 14
+    }
+  },
+  "draft an invoice for ioannou immigration consultation, 3 hours at €180": {
+    "kind": "draft",
+    "draft": {
+      "client_id": "00000000-0000-0000-0000-000000000c09",
+      "matter_id": "00000000-0000-0000-0000-0000000a0002",
+      "line_items": [
+        {
+          "description": "Immigration consultation",
+          "quantity": 3,
+          "unit_price": 180
+        }
+      ],
+      "due_days": 30
+    }
+  },
+  "bill demetriou €1200 for property contract review": {
+    "kind": "draft",
+    "draft": {
+      "client_id": "00000000-0000-0000-0000-000000000c05",
+      "matter_id": "00000000-0000-0000-0000-0000000a0005",
+      "line_items": [
+        {
+          "description": "Property contract review",
+          "quantity": 1,
+          "unit_price": 1200
+        }
+      ],
+      "due_days": 30
+    }
+  },
+  "who's overdue?": {
+    "kind": "query",
+    "text": "Two invoices are overdue: 2026/0002 for Papadopoulou (€1,785.00) and 2026/0001 for Christodoulides (€1,285.20). Consider sending payment reminders this week."
+  },
+  "q1 revenue by client": {
+    "kind": "query",
+    "text": "Q1 2026 finalized revenue: Christodoulides €1,285.20 (1 invoice, divorce matter); Papadopoulou €1,785.00 (1 invoice, immigration matter); Andreou €1,904.00 (1 invoice, property matter). Total finalized: €4,974.20."
+  }
+}
