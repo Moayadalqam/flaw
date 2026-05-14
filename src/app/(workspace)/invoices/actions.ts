@@ -51,6 +51,14 @@ import {
   roundCents,
   toMoney,
 } from "@/lib/totals";
+import {
+  callOpenRouter,
+  InvoiceDraftSchema,
+} from "@/lib/openrouter/client";
+import type {
+  ClientCtx,
+  MatterCtx,
+} from "@/lib/openrouter/types";
 import type { InvoiceRow, LineItemRow, ReceiptRow } from "@/lib/types";
 
 // Permissive UUID-shape regex (any version). Seed uses deterministic
@@ -796,4 +804,277 @@ export async function deleteInvoiceAction(
 
   revalidatePath("/invoices");
   redirect("/invoices");
+}
+
+// ---------------------------------------------------------------------------
+// AI Draft — natural language prompt → DRAFT invoice (Phase 5 Task 2)
+// ---------------------------------------------------------------------------
+//
+// Schema audit (re-verified 2026-05-13):
+//   supabase/migrations/20260513000001_schema.sql:128 already declares
+//   `created_by_ai BOOLEAN NOT NULL DEFAULT false` on `public.invoices`,
+//   so no migration is added in this task. The column is filterable in the
+//   /drafts list query with a plain `.eq('created_by_ai', true)`.
+//
+// Write-guard contract (mirrors the locked Phase 5 hard rule):
+//   1. The AI never proposes vat_rate / vat_amount / total / invoice_number
+//      — InvoiceDraftSchema in @/lib/openrouter/client.ts is `.strict()` so
+//      any payload containing those keys fails parsing. Defense in depth:
+//      this action also asserts on the parsed object before INSERT.
+//   2. VAT (0.1900) and totals are recomputed SERVER-SIDE via
+//      computeTotalsFromItems — even if .strict() were ever relaxed in a
+//      future refactor, the values we INSERT here would still be the
+//      server-computed ones.
+//   3. invoice_number stays NULL. Numbers are only allocated by
+//      finalizeInvoiceAction's service-role bridge — the AI never crosses
+//      that seam. The Cyprus gap-free invariant is preserved.
+//   4. RLS deny-by-omission: every INSERT uses `.select('id')` + checks
+//      `data.length === 0` to surface a workspace boundary cross.
+//
+// No service-role import in this code path. No trust ledger reference.
+
+const DraftPromptInput = z
+  .string()
+  .trim()
+  .min(3)
+  .max(500);
+
+const FORBIDDEN_DRAFT_KEYS: ReadonlyArray<string> = [
+  "vat_rate",
+  "vat_amount",
+  "total",
+  "invoice_number",
+];
+
+interface ClientForDraft {
+  id: string;
+  name_el: string;
+  name_en: string;
+  vat_number: string | null;
+  preferred_language: "el" | "en";
+}
+
+interface MatterForDraft {
+  id: string;
+  matter_number: string;
+  title: string;
+  client_id: string;
+}
+
+export type DraftFromAIResult =
+  | { ok: true; id: string }
+  | {
+      ok: false;
+      error:
+        | "refusal"
+        | "no_api_key"
+        | "parse_failed"
+        | "unknown_client"
+        | "unknown_matter"
+        | "insert_failed"
+        | "no_workspace"
+        | "invalid_input";
+    };
+
+export async function draftFromAIAction(
+  nlText: string,
+): Promise<DraftFromAIResult> {
+  // 1. Input validation — reject empty / absurdly long prompts before we
+  // burn a model call or touch the database.
+  const promptParse = DraftPromptInput.safeParse(nlText);
+  if (!promptParse.success) {
+    return { ok: false, error: "invalid_input" };
+  }
+  const prompt = promptParse.data;
+
+  // 2. Auth + workspace lookup — mirrors createInvoiceAction.
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { ok: false, error: "no_workspace" };
+  }
+  const { data: ws } = await supabase
+    .from("workspaces")
+    .select("id")
+    .eq("owner_user_id", user.id)
+    .maybeSingle();
+  if (!ws) {
+    return { ok: false, error: "no_workspace" };
+  }
+
+  // 3. Fetch context for the AI. RLS scopes both queries to this workspace.
+  // Top 50 most-recent of each — keeps the prompt token budget bounded
+  // even on larger workspaces.
+  const { data: clientsData } = await supabase
+    .from("clients")
+    .select("id, name_el, name_en, vat_number, preferred_language")
+    .order("created_at", { ascending: false })
+    .limit(50)
+    .returns<ClientForDraft[]>();
+  const clients: ClientForDraft[] = clientsData ?? [];
+
+  const { data: mattersData } = await supabase
+    .from("matters")
+    .select("id, matter_number, title, client_id")
+    .eq("status", "open")
+    .order("created_at", { ascending: false })
+    .limit(50)
+    .returns<MatterForDraft[]>();
+  const matters: MatterForDraft[] = mattersData ?? [];
+
+  // 4. Call the OpenRouter adapter. The adapter handles DEMO_CACHE,
+  // refusal, parse_failed, and the .strict() Zod validation already.
+  const clientCtx: ClientCtx[] = clients.map((c) => ({
+    id: c.id,
+    name_el: c.name_el,
+    name_en: c.name_en,
+    preferred_language: c.preferred_language,
+  }));
+  const matterCtx: MatterCtx[] = matters.map((m) => ({
+    id: m.id,
+    client_id: m.client_id,
+    matter_number: m.matter_number,
+    title: m.title,
+  }));
+
+  const aiResult = await callOpenRouter({
+    kind: "draft",
+    text: prompt,
+    contextData: { clients: clientCtx, matters: matterCtx },
+  });
+
+  // 5. Error mapping — be conservative on the unknown bucket.
+  if (!aiResult.ok) {
+    if (aiResult.error === "refusal") {
+      return { ok: false, error: "refusal" };
+    }
+    if (aiResult.error === "no_api_key") {
+      return { ok: false, error: "no_api_key" };
+    }
+    return { ok: false, error: "parse_failed" };
+  }
+
+  const draft = aiResult.draft;
+
+  // 10. Defense in depth — even though InvoiceDraftSchema is .strict(),
+  // re-assert that no forbidden keys leaked through. This is a cheap
+  // second check; if it ever fires in production the schema regressed.
+  for (const key of FORBIDDEN_DRAFT_KEYS) {
+    if (Object.prototype.hasOwnProperty.call(draft, key)) {
+      return { ok: false, error: "parse_failed" };
+    }
+  }
+  // Mirror the assertion at the line-item level. The schema already
+  // rejects unknown keys on items via inner .strict(), so this is
+  // again defense in depth.
+  for (const item of draft.line_items) {
+    for (const key of FORBIDDEN_DRAFT_KEYS) {
+      if (Object.prototype.hasOwnProperty.call(item, key)) {
+        return { ok: false, error: "parse_failed" };
+      }
+    }
+  }
+  // Cross-check the AI's payload survives a second pass through the
+  // canonical schema. Any drift between the cached + live paths gets
+  // surfaced here as parse_failed rather than corrupting an INSERT.
+  const reparse = InvoiceDraftSchema.safeParse(draft);
+  if (!reparse.success) {
+    return { ok: false, error: "parse_failed" };
+  }
+
+  // 6. Validate the AI's client_id against the fetched list (in-memory).
+  const matchedClient = clients.find((c) => c.id === draft.client_id);
+  if (!matchedClient) {
+    return { ok: false, error: "unknown_client" };
+  }
+
+  // 7. Validate matter_id exists AND belongs to this client.
+  const matchedMatter = matters.find((m) => m.id === draft.matter_id);
+  if (!matchedMatter) {
+    return { ok: false, error: "unknown_matter" };
+  }
+  if (matchedMatter.client_id !== draft.client_id) {
+    return { ok: false, error: "unknown_matter" };
+  }
+
+  // 8. SERVER-SIDE totals. The AI proposes line items as
+  // { description, quantity: number, unit_price: number }. We convert
+  // each to the NUMERIC-string format the totals helper + DB driver
+  // expect, then recompute subtotal / vat_amount / total / per-line
+  // totals from scratch — the AI's numbers are never written.
+  const stringItems = draft.line_items.map((li) => ({
+    quantity: li.quantity.toFixed(2),
+    unit_price: li.unit_price.toFixed(2),
+  }));
+  const { subtotal, vatAmount, total, lineTotals } =
+    computeTotalsFromItems(stringItems);
+
+  // 9. Due date — `due_days` is 0-365 per the Zod schema. ISO `YYYY-MM-DD`
+  // matches the createInvoiceAction shape so the DB DATE column accepts.
+  const dueDate = new Date();
+  dueDate.setDate(dueDate.getDate() + draft.due_days);
+  const dueAt = dueDate.toISOString().slice(0, 10);
+
+  // 11. INSERT the invoice as a draft. `created_by_ai=true` is the bit
+  // the /drafts list query filters on. invoice_number stays NULL —
+  // the gap-free invariant is preserved (only finalizeInvoiceAction
+  // allocates).
+  const issuedAt = new Date().toISOString().slice(0, 10);
+  const language = matchedClient.preferred_language ?? "el";
+
+  const { data: inserted, error: invErr } = await supabase
+    .from("invoices")
+    .insert({
+      workspace_id: ws.id,
+      client_id: draft.client_id,
+      matter_id: draft.matter_id,
+      status: "draft",
+      created_by_ai: true,
+      issued_at: issuedAt,
+      due_at: dueAt,
+      subtotal: toMoney(subtotal),
+      vat_rate: "0.1900",
+      vat_amount: toMoney(vatAmount),
+      total: toMoney(total),
+      currency: "EUR",
+      notes: null,
+      language,
+    })
+    .select("id")
+    .returns<Pick<InvoiceRow, "id">[]>();
+
+  if (invErr) return { ok: false, error: "insert_failed" };
+  if (!inserted || inserted.length === 0) {
+    return { ok: false, error: "insert_failed" };
+  }
+  const invoiceId = inserted[0].id;
+
+  // 12. INSERT line items in one batch — same pattern as
+  // createInvoiceAction lines 374-394 above.
+  const rows = draft.line_items.map((li, i) => ({
+    invoice_id: invoiceId,
+    workspace_id: ws.id,
+    description: li.description,
+    quantity: li.quantity.toFixed(2),
+    unit_price: li.unit_price.toFixed(2),
+    line_total: toMoney(lineTotals[i]),
+    vat_rate: "0.1900",
+    position: i + 1,
+    kind: "service",
+  }));
+  const { data: lineData, error: lineErr } = await supabase
+    .from("invoice_line_items")
+    .insert(rows)
+    .select("id")
+    .returns<Pick<LineItemRow, "id">[]>();
+  if (lineErr) return { ok: false, error: "insert_failed" };
+  if (!lineData || lineData.length === 0) {
+    return { ok: false, error: "insert_failed" };
+  }
+
+  revalidatePath("/drafts");
+  revalidatePath("/invoices");
+  return { ok: true, id: invoiceId };
 }

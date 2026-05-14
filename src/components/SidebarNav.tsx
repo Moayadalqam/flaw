@@ -24,6 +24,7 @@ type NavItem = {
     | "clients"
     | "cases"
     | "invoices"
+    | "drafts"
     | "receipts"
     | "quotations"
     | "retainers"
@@ -35,12 +36,14 @@ type NavItem = {
 };
 
 // Order is locked by the design spec: Dashboard, Clients, Cases, Invoices,
-// Receipts, Quotations, Retainers, Trust ledger, Assistant, Reports.
+// Drafts (Phase 5 — AI review queue), Receipts, Quotations, Retainers,
+// Trust ledger, Assistant, Reports.
 const ITEMS: ReadonlyArray<NavItem> = [
   { href: "/dashboard", key: "dashboard", icon: LayoutGrid },
   { href: "/clients", key: "clients", icon: Users },
   { href: "/cases", key: "cases", icon: Briefcase },
   { href: "/invoices", key: "invoices", icon: FileText },
+  { href: "/drafts", key: "drafts", icon: Sparkles },
   { href: "/receipts", key: "receipts", icon: Receipt },
   { href: "/quotations", key: "quotations", icon: FileCheck },
   { href: "/retainers", key: "retainers", icon: Wallet },
