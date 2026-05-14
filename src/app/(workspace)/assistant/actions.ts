@@ -24,8 +24,8 @@
  *   1. No service-role import. Both paths use `createClient()` from
  *      `@/lib/supabase/server` which is user-scoped via the SSR cookie
  *      session. RLS owns workspace isolation.
- *   2. The query path never touches `trust_ledger` or `retainers` — it
- *      only reads `invoices` (see `queries.ts`).
+ *   2. The query path never touches the fiduciary ledger or retainer
+ *      balances — it only reads `invoices` (see `queries.ts`).
  *   3. Intent classification is conservative — false positives prefer the
  *      safer Draft → Review path (see `intent.ts`).
  */
