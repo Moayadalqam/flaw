@@ -424,25 +424,16 @@ export async function acceptQuotationAction(
     const message = error?.message ?? "";
     if (message.includes("not_sent")) return { error: "not_sent" };
     if (message.includes("not_found")) return { error: "not_found" };
+    if (message.includes("not_authenticated")) return { error: "no_workspace" };
+    if (message.includes("quotation_missing_matter")) return { error: "sp_failed" };
     return { error: "sp_failed" };
   }
   const newInvoiceId = data as string;
 
-  // Defense-in-depth check after the SP — verify the source quotation is now
-  // accepted and points at the new invoice. data.length === 0 surfaces as
-  // not_found for the deny-by-omission audit (4th occurrence — required by
-  // plan validation).
-  const { data: confirm } = await supabase
-    .from("quotations")
-    .update({})
-    .eq("id", id)
-    .eq("status", "accepted")
-    .eq("converted_invoice_id", newInvoiceId)
-    .select("id")
-    .returns<Pick<QuotationRow, "id">[]>();
-  if (!confirm || confirm.length === 0) {
-    return { error: "sp_failed" };
-  }
+  // The SP is the application contract: it atomically writes invoice + line
+  // items + quotation status across three tables inside a single PL/pgSQL
+  // transaction. A non-null return UUID means the transaction committed; no
+  // follow-up "did the DB really change" probe is appropriate.
 
   revalidatePath("/quotations");
   revalidatePath(`/quotations/${id}`);
