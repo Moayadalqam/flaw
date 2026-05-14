@@ -7,6 +7,25 @@ const Body = z.object({
 });
 
 export async function POST(request: Request) {
+  // Defense-in-depth CSRF guard. The locale cookie is non-session, but a
+  // cross-site form POST could still flip a logged-in user's display
+  // language mid-session. `sameSite: 'lax'` blocks most cases; an explicit
+  // Origin check covers the rest.
+  const origin = request.headers.get("origin");
+  const host = request.headers.get("host");
+  if (origin) {
+    const originHost = (() => {
+      try {
+        return new URL(origin).host;
+      } catch {
+        return null;
+      }
+    })();
+    if (!originHost || originHost !== host) {
+      return NextResponse.json({ error: "bad_origin" }, { status: 403 });
+    }
+  }
+
   let payload: unknown;
   try {
     payload = await request.json();

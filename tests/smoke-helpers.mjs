@@ -171,6 +171,13 @@ async function verifyMailpitReachable() {
   // Confirm the email transport is alive without burning the
   // `email_sent` rate-limit budget. A simple GET on the messages endpoint
   // returns 200 + `{ messages: [...] }` regardless of inbox state.
+  //
+  // SKIP_MAILPIT_PROBE=1 short-circuits this check entirely — required for
+  // running the smoke suite against a production URL where Mailpit isn't
+  // reachable (real SMTP transport instead).
+  if (process.env.SKIP_MAILPIT_PROBE === "1") {
+    return;
+  }
   try {
     const res = await fetch(`${MAILPIT_BASE}/api/v1/messages?limit=1`);
     if (!res.ok) {

@@ -29,7 +29,7 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "Lex — The invoicing platform built for lawyers",
   description:
-    "Cyprus-VAT-compliant invoices, receipts, quotations and retainers — bilingual Greek + English, billable hours by case, trust-ledger-aware. Built by Qualia Solutions.",
+    "Cyprus-VAT-compliant invoices, receipts, quotations and retainers — bilingual Greek + English, billable hours by case, disbarment-grade trust ledger isolation. Built by Qualia Solutions.",
 };
 
 export default async function RootLayout({
