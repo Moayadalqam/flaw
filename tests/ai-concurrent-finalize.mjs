@@ -28,10 +28,10 @@
  *   Marked as `[deviation] direct SP test via existing
  *   /api/test/finalize-concurrent; AI-draft path structurally identical`.
  *
- *   Cleanup note: this test ADDS 5 finalized invoices to the seed corpus.
- *   Cyprus VAT law forbids deleting finalized invoices, so the test does
- *   NOT clean up after itself. To restore the seed baseline run
- *   `npm run db:reset`.
+ *   Cleanup: this test auto-runs `npm run db:reset` after the assertion (success or failure)
+ *   via a try/finally wrapper to restore seed baseline. Cyprus VAT immutability applies to
+ *   COMMITTED invoice rows in production; auto-reset is the standard test isolation pattern
+ *   for local development.
  *
  * Exit 0 on success (5 distinct sequential numbers + service responded
  * `unique: true` + `gap_free: true`), 1 otherwise.
@@ -47,6 +47,7 @@
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { performance } from "node:perf_hooks";
+import { execFileSync } from "node:child_process";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -62,7 +63,31 @@ process.env.DEMO_CACHE = process.env.DEMO_CACHE ?? "true";
 const BASE = process.env.LEX_LOCAL_URL ?? "http://localhost:3000";
 const N = 5;
 
+function cleanupSeed() {
+  console.log("[CLEANUP] Running `npm run db:reset` to restore seed baseline …");
+  try {
+    execFileSync("npm", ["run", "db:reset"], {
+      cwd: REPO_ROOT,
+      stdio: "inherit",
+      encoding: "utf8",
+    });
+    console.log("[CLEANUP] db:reset complete — seed baseline restored.");
+    return true;
+  } catch (err) {
+    console.error(
+      `[CLEANUP FAIL] db:reset returned non-zero; pollution NOT cleaned. Run \`npm run db:reset\` manually before the demo. Cause: ${
+        err instanceof Error ? err.message : String(err)
+      }`,
+    );
+    return false;
+  }
+}
+
 async function main() {
+  console.log(
+    "[DESTRUCTIVE] This test commits 5 finalized invoices to the local DB. Will run `npm run db:reset` automatically after the assertion to restore seed baseline.",
+  );
+
   // ─── Deviation banner (Phase 5 gap closure cycle 1) ───────────────────
   // The plan-preferred path drives 5 concurrent `draftFromAIAction` calls
   // (via an HTTP+auth wrapper endpoint) followed by 5 concurrent
@@ -90,109 +115,131 @@ async function main() {
     `Lex AI concurrent finalize — ${N} parallel allocations against ${BASE}/api/test/finalize-concurrent`,
   );
 
-  const url = `${BASE}/api/test/finalize-concurrent?n=${N}`;
-  const t0 = performance.now();
-
-  let res;
-  try {
-    res = await fetch(url, { redirect: "follow" });
-  } catch (err) {
-    console.error(
-      `FAIL — fetch error: ${err instanceof Error ? err.message : String(err)}`,
-    );
-    console.error(
-      `Hint: this test needs a running dev server (\`npm run dev\`).`,
-    );
-    process.exit(1);
+  class TestExit extends Error {
+    constructor(code) {
+      super("test exit");
+      this.code = code;
+    }
   }
 
-  const elapsedMs = performance.now() - t0;
+  let exitCode = 0;
+  try {
+    const url = `${BASE}/api/test/finalize-concurrent?n=${N}`;
+    const t0 = performance.now();
 
-  if (!res.ok) {
-    let detail = "";
+    let res;
     try {
-      detail = await res.text();
-    } catch {
-      /* fall through */
-    }
-    console.error(
-      `FAIL — HTTP ${res.status} after ${elapsedMs.toFixed(0)}ms${
-        detail ? `: ${detail.slice(0, 200)}` : ""
-      }`,
-    );
-    process.exit(1);
-  }
-
-  let body;
-  try {
-    body = await res.json();
-  } catch (err) {
-    console.error(
-      `FAIL — non-JSON response: ${err instanceof Error ? err.message : String(err)}`,
-    );
-    process.exit(1);
-  }
-
-  const numbers = Array.isArray(body?.numbers) ? body.numbers : [];
-
-  if (numbers.length !== N) {
-    console.error(
-      `FAIL — expected ${N} numbers, got ${numbers.length}: ${JSON.stringify(numbers)}`,
-    );
-    process.exit(1);
-  }
-
-  // Re-verify uniqueness + gap-free locally — do not trust the endpoint's
-  // own assertion blindly. The SP is the source of truth.
-  const unique = new Set(numbers).size === numbers.length;
-  if (!unique) {
-    console.error(
-      `FAIL — duplicate numbers in allocation: ${JSON.stringify(numbers)}`,
-    );
-    process.exit(1);
-  }
-
-  // Numbers are formatted YYYY/NNNN. Sort numerically by the sequence
-  // suffix and assert each adjacent pair differs by exactly 1.
-  const sequences = numbers
-    .map((s) => {
-      const parts = String(s).split("/");
-      const n = parseInt(parts[1] ?? "0", 10);
-      return Number.isFinite(n) ? n : Number.NaN;
-    })
-    .sort((a, b) => a - b);
-
-  if (sequences.some((n) => !Number.isFinite(n))) {
-    console.error(
-      `FAIL — non-numeric sequence in numbers: ${JSON.stringify(numbers)}`,
-    );
-    process.exit(1);
-  }
-
-  for (let i = 1; i < sequences.length; i++) {
-    if (sequences[i] !== sequences[i - 1] + 1) {
+      res = await fetch(url, { redirect: "follow" });
+    } catch (err) {
       console.error(
-        `FAIL — gap between ${sequences[i - 1]} and ${sequences[i]} in ${JSON.stringify(
-          numbers,
-        )}`,
+        `FAIL — fetch error: ${err instanceof Error ? err.message : String(err)}`,
       );
-      process.exit(1);
+      console.error(
+        `Hint: this test needs a running dev server (\`npm run dev\`).`,
+      );
+      throw new TestExit(1);
+    }
+
+    const elapsedMs = performance.now() - t0;
+
+    if (!res.ok) {
+      let detail = "";
+      try {
+        detail = await res.text();
+      } catch {
+        /* fall through */
+      }
+      console.error(
+        `FAIL — HTTP ${res.status} after ${elapsedMs.toFixed(0)}ms${
+          detail ? `: ${detail.slice(0, 200)}` : ""
+        }`,
+      );
+      throw new TestExit(1);
+    }
+
+    let body;
+    try {
+      body = await res.json();
+    } catch (err) {
+      console.error(
+        `FAIL — non-JSON response: ${err instanceof Error ? err.message : String(err)}`,
+      );
+      throw new TestExit(1);
+    }
+
+    const numbers = Array.isArray(body?.numbers) ? body.numbers : [];
+
+    if (numbers.length !== N) {
+      console.error(
+        `FAIL — expected ${N} numbers, got ${numbers.length}: ${JSON.stringify(numbers)}`,
+      );
+      throw new TestExit(1);
+    }
+
+    // Re-verify uniqueness + gap-free locally — do not trust the endpoint's
+    // own assertion blindly. The SP is the source of truth.
+    const unique = new Set(numbers).size === numbers.length;
+    if (!unique) {
+      console.error(
+        `FAIL — duplicate numbers in allocation: ${JSON.stringify(numbers)}`,
+      );
+      throw new TestExit(1);
+    }
+
+    // Numbers are formatted YYYY/NNNN. Sort numerically by the sequence
+    // suffix and assert each adjacent pair differs by exactly 1.
+    const sequences = numbers
+      .map((s) => {
+        const parts = String(s).split("/");
+        const n = parseInt(parts[1] ?? "0", 10);
+        return Number.isFinite(n) ? n : Number.NaN;
+      })
+      .sort((a, b) => a - b);
+
+    if (sequences.some((n) => !Number.isFinite(n))) {
+      console.error(
+        `FAIL — non-numeric sequence in numbers: ${JSON.stringify(numbers)}`,
+      );
+      throw new TestExit(1);
+    }
+
+    for (let i = 1; i < sequences.length; i++) {
+      if (sequences[i] !== sequences[i - 1] + 1) {
+        console.error(
+          `FAIL — gap between ${sequences[i - 1]} and ${sequences[i]} in ${JSON.stringify(
+            numbers,
+          )}`,
+        );
+        throw new TestExit(1);
+      }
+    }
+
+    // Cross-check the endpoint's own verdicts — they should agree.
+    if (body.unique !== true || body.gap_free !== true) {
+      console.error(
+        `FAIL — endpoint disagrees: unique=${body.unique} gap_free=${body.gap_free}`,
+      );
+      throw new TestExit(1);
+    }
+
+    console.log(
+      `[PASS] ${N} concurrent finalizes — numbers=${numbers.join(",")} (sequence ${sequences[0]}..${sequences[sequences.length - 1]}) in ${elapsedMs.toFixed(0)}ms`,
+    );
+    console.log(`Summary: 1/1 passed`);
+  } catch (err) {
+    if (err instanceof TestExit) {
+      exitCode = err.code;
+    } else {
+      console.error("Unexpected error:", err);
+      exitCode = 1;
+    }
+  } finally {
+    const cleaned = cleanupSeed();
+    if (!cleaned && exitCode === 0) {
+      exitCode = 1; // assertion passed but cleanup failed
     }
   }
-
-  // Cross-check the endpoint's own verdicts — they should agree.
-  if (body.unique !== true || body.gap_free !== true) {
-    console.error(
-      `FAIL — endpoint disagrees: unique=${body.unique} gap_free=${body.gap_free}`,
-    );
-    process.exit(1);
-  }
-
-  console.log(
-    `[PASS] ${N} concurrent finalizes — numbers=${numbers.join(",")} (sequence ${sequences[0]}..${sequences[sequences.length - 1]}) in ${elapsedMs.toFixed(0)}ms`,
-  );
-  console.log(`Summary: 1/1 passed`);
-  process.exit(0);
+  process.exit(exitCode);
 }
 
 main().catch((err) => {
