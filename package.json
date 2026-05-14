@@ -14,7 +14,9 @@
     "db:test": "npx supabase db reset && bash supabase/tests/run.sh",
     "test:ai-injection": "DEMO_CACHE=true tsx tests/ai-injection.mjs",
     "test:ai-preflight": "DEMO_CACHE=true node tests/ai-preflight.mjs",
-    "test:ai-concurrent": "DEMO_CACHE=true node tests/ai-concurrent-finalize.mjs"
+    "test:ai-concurrent": "DEMO_CACHE=true node tests/ai-concurrent-finalize.mjs",
+    "test:smoke": "DEMO_CACHE=true node tests/smoke.mjs",
+    "test:all": "npm run test:ai-injection && npm run test:ai-preflight && npm run test:ai-concurrent && npm run test:smoke"
   },
   "dependencies": {
     "@react-pdf/renderer": "^4.5.1",
