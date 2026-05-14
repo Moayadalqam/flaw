@@ -166,7 +166,9 @@ export type InvoiceActionResult =
         | "not_finalized"
         | "already_finalized"
         | "no_line_items"
-        | "receipt_failed";
+        | "receipt_failed"
+        | "time_entry_not_found"
+        | "time_entry_already_billed";
     };
 
 export type LineItemActionResult =
@@ -268,6 +270,79 @@ export async function createInvoiceAction(
     parsed.data.line_items,
   );
 
+  // ─────────────────────────────────────────────────────────────────────
+  // Atomic prefill path: timer → "Bill these hours" carries a
+  // `from_time_entry` UUID. When present, route the whole transaction
+  // (workspace ownership re-check, time-entry FOR UPDATE row-lock + state
+  // invariants, INSERT invoice, INSERT line item, UPDATE time entry)
+  // through the SECURITY DEFINER stored procedure
+  // `create_invoice_from_time_entry` (Migration 009). The SP holds all
+  // four writes in one PL/pgSQL transaction; the SELECT … FOR UPDATE
+  // serialises concurrent callers so a second submission with the same
+  // time-entry UUID deterministically sees `status='billed'` and raises
+  // `time_entry_already_billed`.
+  //
+  // The non-prefill path (regular new-invoice flow) keeps the plain
+  // RLS-scoped INSERT/INSERT below — multi-line invoices aren't carried
+  // by the SP signature, and the regular path has no concurrency hazard.
+  // ─────────────────────────────────────────────────────────────────────
+  const rawFromTimeEntry = formData.get("from_time_entry");
+  if (
+    typeof rawFromTimeEntry === "string" &&
+    UUID_RE.test(rawFromTimeEntry)
+  ) {
+    // The prefill flow carries exactly one line item (hours × rate).
+    // Reject any submission that diverges — the SP only models one line.
+    // The form seeds a single line; this is a defence-in-depth check
+    // against tampered FormData or a user adding extra lines on the
+    // prefill page (those extra lines wouldn't represent billed hours).
+    if (parsed.data.line_items.length !== 1) {
+      return { error: "insert_failed" };
+    }
+    const line = parsed.data.line_items[0];
+    const { data: spData, error: spErr } = await supabase.rpc(
+      "create_invoice_from_time_entry",
+      {
+        p_workspace: ws.id,
+        p_client: parsed.data.client_id,
+        p_matter: parsed.data.matter_id,
+        p_time_entry: rawFromTimeEntry,
+        p_language: parsed.data.language,
+        p_notes: parsed.data.notes,
+        p_due_at: parsed.data.due_at,
+        p_description: line.description,
+        p_quantity: line.quantity,
+        p_unit_price: line.unit_price,
+        p_line_total: toMoney(lineTotals[0]),
+        p_subtotal: toMoney(subtotal),
+        p_vat_amount: toMoney(vatAmount),
+        p_total: toMoney(total),
+        p_actor: user.id,
+      },
+    );
+
+    if (spErr) {
+      const msg = spErr.message ?? "";
+      if (msg.includes("time_entry_not_found")) {
+        return { error: "time_entry_not_found" };
+      }
+      if (msg.includes("time_entry_already_billed")) {
+        return { error: "time_entry_already_billed" };
+      }
+      if (msg.includes("workspace ownership mismatch")) {
+        return { error: "no_workspace" };
+      }
+      return { error: "insert_failed" };
+    }
+    if (typeof spData !== "string" || spData.length === 0) {
+      return { error: "insert_failed" };
+    }
+
+    revalidatePath("/invoices");
+    revalidatePath("/timer");
+    redirect(`/invoices/${spData}`);
+  }
+
   // Insert the invoice as a draft (invoice_number NULL — Cyprus VAT requires
   // numbers be allocated only on finalize, never on draft creation).
   const { data: inserted, error: invErr } = await supabase
@@ -318,45 +393,7 @@ export async function createInvoiceAction(
     return { error: "insert_failed" };
   }
 
-  // ─────────────────────────────────────────────────────────────────────
-  // Cross-cutting hook (Phase 4 Task 4): flip the source time entry to
-  // `status='billed'` and link its `invoice_id` to this new invoice so
-  // the same hours can never be billed twice. RLS auto-scopes; we also
-  // require `status='completed'` and `invoice_id IS NULL` defensively.
-  // If the update fails (e.g. concurrent flip), we warn-and-continue —
-  // we do NOT roll back the invoice. Cyprus VAT bookkeeping doesn't
-  // allow draft-then-delete ping-pong; manual unlink is the fallback.
-  // ─────────────────────────────────────────────────────────────────────
-  const rawFromTimeEntry = formData.get("from_time_entry");
-  if (
-    typeof rawFromTimeEntry === "string" &&
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-      rawFromTimeEntry,
-    )
-  ) {
-    const { data: timeUpd, error: timeErr } = await supabase
-      .from("time_entries")
-      .update({ status: "billed", invoice_id: invoiceId })
-      .eq("id", rawFromTimeEntry)
-      .eq("user_id", user.id)
-      .eq("status", "completed")
-      .is("invoice_id", null)
-      .select("id");
-    if (timeErr) {
-      console.warn(
-        "from_time_entry status flip failed (db error)",
-        timeErr.message,
-      );
-    } else if (!timeUpd || timeUpd.length === 0) {
-      console.warn(
-        "from_time_entry status flip matched 0 rows — race or RLS denial",
-        { invoiceId, fromTimeEntry: rawFromTimeEntry },
-      );
-    }
-  }
-
   revalidatePath("/invoices");
-  revalidatePath("/timer");
   redirect(`/invoices/${invoiceId}`);
 }
 
