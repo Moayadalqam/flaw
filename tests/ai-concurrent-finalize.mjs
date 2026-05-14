@@ -70,6 +70,10 @@ function cleanupSeed() {
       cwd: REPO_ROOT,
       stdio: "inherit",
       encoding: "utf8",
+      env: {
+        ...process.env,
+        DOCKER_HOST: `unix:///run/user/${process.getuid()}/podman/podman.sock`,
+      },
     });
     console.log("[CLEANUP] db:reset complete — seed baseline restored.");
     return true;
