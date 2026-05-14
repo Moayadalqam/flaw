@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "check:cache-integrity": "node scripts/check-demo-cache-integrity.mjs",
     "db:reset": "npx supabase db reset",
     "db:push": "npx supabase db push",
     "db:test": "npx supabase db reset && bash supabase/tests/run.sh",
