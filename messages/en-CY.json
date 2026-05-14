@@ -4,6 +4,7 @@
     "clients": "Clients",
     "cases": "Cases",
     "invoices": "Invoices",
+    "drafts": "Drafts",
     "receipts": "Receipts",
     "quotations": "Quotations",
     "retainers": "Retainers",
@@ -240,5 +241,31 @@
     "error": "Something went wrong. Please try again.",
     "invalidEmail": "Please enter a valid email address.",
     "disclaimer": "A magic link will be emailed to you. No passwords, ever."
+  },
+  "ai": {
+    "askLex": "Ask Lex",
+    "placeholderDraft": "Invoice Andreou for the divorce filing, €450, due in 14 days",
+    "placeholderQuery": "Who is overdue?",
+    "drafting": "Drafting…",
+    "answering": "Thinking…",
+    "errors": {
+      "noApiKey": "AI service not configured — set OPENROUTER_API_KEY.",
+      "refusal": "I couldn't draft that — please specify an existing client and matter.",
+      "parseFailed": "Couldn't parse the AI response. Try rephrasing.",
+      "networkError": "Couldn't reach the AI service. Check your connection.",
+      "unknownClient": "I don't see that client in your workspace.",
+      "unknownMatter": "I don't see that matter in your workspace.",
+      "rateLimit": "Too many requests — please wait a moment."
+    }
+  },
+  "drafts": {
+    "title": "AI Drafts",
+    "empty": "No AI drafts yet — open ⌘K and describe an invoice.",
+    "draftBadge": "DRAFT — pending finalize",
+    "finalize": "Finalize → allocate number",
+    "discard": "Discard",
+    "discardConfirm": "Discard this draft? No invoice number will be consumed.",
+    "watermarkLabel": "Preview — DRAFT watermark applies until finalized.",
+    "previewLabel": "Preview"
   }
 }
