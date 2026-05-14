@@ -88,7 +88,73 @@ vercel --prod
 - [ ] Run `bash supabase/tests/run.sh` against the cloud DB connection → `ALL PASS`.
 - [ ] If any check fails, have a verbal workaround prepared. Do not demo a broken path.
 
-## 11. Research-flagged questions to ask Fotini live
+## 11. Phase 6 production secrets
+
+The minimum env-var set required in `vercel env ls production` before
+`vercel --prod` will produce a working deploy. Source values from the cloud
+Supabase project (created in §2-§4 above) and your existing `.env.local`.
+
+| Variable                                  | Required | Source                                                | Notes                                                                 |
+|-------------------------------------------|----------|-------------------------------------------------------|-----------------------------------------------------------------------|
+| `NEXT_PUBLIC_SUPABASE_URL`                | yes      | Supabase Studio → Settings → API → URL (cloud, EU)    | **Must not** be `localhost` or `127.0.0.1` — deploy will 500.         |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`    | yes      | Supabase Studio → Settings → API → anon/publishable   | Safe in client bundles.                                               |
+| `SUPABASE_SERVICE_ROLE_KEY`               | yes      | Supabase Studio → Settings → API → service_role       | Server-only. NEVER expose in client components.                       |
+| `OPENROUTER_API_KEY`                      | yes      | Your existing key (already in `.env.local`)           | Ask Fawzi if missing.                                                 |
+| `OPENROUTER_MODEL`                        | yes      | Literal: `mistralai/mistral-large-latest`             | EU-routed model. Pin for Cyprus Bar data residency.                   |
+| `NEXT_PUBLIC_APP_URL`                     | yes      | Production URL after first deploy                     | Used in magic-link callback + email templates.                        |
+| `DEMO_CACHE`                              | **yes**  | Literal: `true`                                       | **Locked decision — see below.** Required because `RESEND_API_KEY` is NOT set in prod. |
+| `RESEND_API_KEY`                          | NO       | —                                                     | **Locked decision (2026-05-13): NOT set in production.** See below.   |
+| `RESEND_FROM_EMAIL`                       | optional | `lex@qualiasolutions.cy`                              | Only consulted if `RESEND_API_KEY` is later added.                    |
+
+### Locked decision — `RESEND_API_KEY` not in production
+
+Per the 2026-05-13 user decision, Lex ships to the pitch demo **without**
+Resend transactional email. Reasoning:
+
+- Pitch fallback prioritises offline-safety over real-email delivery — every
+  reminder card must render visibly even if the email transport is dead.
+- `src/lib/email/resend.ts` returns `{status: "no_api_key"}` when its key is
+  absent. The reminder UI on `/reports/aging` is designed to render the AI
+  draft preview regardless of the email transport's state.
+- `DEMO_CACHE=true` short-circuits `src/lib/openrouter/client.ts` to the
+  cached payloads in `src/lib/openrouter/demo-cache.json`, eliminating any
+  dependence on OpenRouter latency or rate limits during the pitch.
+
+**If this decision is reversed post-pitch** (real reminder emails desired):
+
+1. Provision a Resend account, verify `qualiasolutionscy.cy` as a sending
+   domain (SPF + DKIM + DMARC per Resend onboarding).
+2. `echo "<resend-key>" | vercel env add RESEND_API_KEY production`
+3. Optionally remove `DEMO_CACHE` from production so live AI drafts replace
+   the cached payloads. Test thoroughly — the cached payloads exist because
+   live OpenRouter has timed out during prior dry-runs.
+
+### Setting all env vars at once (operator runbook)
+
+After cloud Supabase is provisioned and you have its API keys, paste-and-run:
+
+```bash
+SUPABASE_REF=<from-supabase-studio>            # e.g. xxxxxxxx
+SUPABASE_ANON=<publishable-key>
+SUPABASE_SRK=<service-role-key>
+OR_KEY=<openrouter-key>
+APP_URL=https://flaw.vercel.app                # update if using a custom domain
+
+echo "https://${SUPABASE_REF}.supabase.co"     | vercel env add NEXT_PUBLIC_SUPABASE_URL production
+echo "${SUPABASE_ANON}"                        | vercel env add NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY production
+echo "${SUPABASE_SRK}"                         | vercel env add SUPABASE_SERVICE_ROLE_KEY production
+echo "${OR_KEY}"                               | vercel env add OPENROUTER_API_KEY production
+echo "mistralai/mistral-large-latest"          | vercel env add OPENROUTER_MODEL production
+echo "${APP_URL}"                              | vercel env add NEXT_PUBLIC_APP_URL production
+echo "true"                                    | vercel env add DEMO_CACHE production
+echo "lex@qualiasolutions.cy"                  | vercel env add RESEND_FROM_EMAIL production
+
+vercel env ls production                       # confirm 8 entries (plus AXIOM telemetry)
+```
+
+Then `vercel --prod` and follow the 5-check protocol in §9 above.
+
+## 12. Research-flagged questions to ask Fotini live
 
 These four items are flagged INSUFFICIENT EVIDENCE in `.planning/research/SUMMARY.md` — confirm with her in the meeting, do not infer:
 
