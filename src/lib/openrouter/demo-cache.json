@@ -14,11 +14,11 @@
       "due_days": 14
     }
   },
-  "draft an invoice for ioannou immigration consultation, 3 hours at €180": {
+  "draft an invoice for konstantinou immigration consultation, 3 hours at €180": {
     "kind": "draft",
     "draft": {
-      "client_id": "00000000-0000-0000-0000-000000000c09",
-      "matter_id": "00000000-0000-0000-0000-0000000a0002",
+      "client_id": "00000000-0000-0000-0000-000000000c04",
+      "matter_id": "00000000-0000-0000-0000-0000000a0004",
       "line_items": [
         {
           "description": "Immigration consultation",
