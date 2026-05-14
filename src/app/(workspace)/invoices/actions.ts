@@ -51,10 +51,8 @@ import {
   roundCents,
   toMoney,
 } from "@/lib/totals";
-import {
-  callOpenRouter,
-  InvoiceDraftSchema,
-} from "@/lib/openrouter/client";
+import { callOpenRouter } from "@/lib/openrouter/client";
+import { validateAIDraftCandidate } from "@/lib/openrouter/validate";
 import type {
   ClientCtx,
   MatterCtx,
@@ -839,13 +837,6 @@ const DraftPromptInput = z
   .min(3)
   .max(500);
 
-const FORBIDDEN_DRAFT_KEYS: ReadonlyArray<string> = [
-  "vat_rate",
-  "vat_amount",
-  "total",
-  "invoice_number",
-];
-
 interface ClientForDraft {
   id: string;
   name_el: string;
@@ -956,48 +947,24 @@ export async function draftFromAIAction(
     return { ok: false, error: "parse_failed" };
   }
 
-  const draft = aiResult.draft;
+  // 6. Validation pipeline — extracted into a pure function so the
+  // adversarial test suite (`tests/ai-injection.mjs`) can exercise the
+  // exact same six guards (FORBIDDEN_DRAFT_KEYS outer + per-item,
+  // schema reparse, client lookup, matter lookup, cross-client pairing)
+  // without standing up the full Server Action HTTP boundary. The
+  // validator's `clients`/`matters` parameters intentionally accept the
+  // narrow `{ id }` / `{ id, client_id }` shapes via structural typing —
+  // we pass the richer `ClientForDraft` / `MatterForDraft` rows here.
+  const validation = validateAIDraftCandidate(aiResult.draft, clients, matters);
+  if (!validation.ok) {
+    return { ok: false, error: validation.error };
+  }
+  const draft = validation.draft;
 
-  // 10. Defense in depth — even though InvoiceDraftSchema is .strict(),
-  // re-assert that no forbidden keys leaked through. This is a cheap
-  // second check; if it ever fires in production the schema regressed.
-  for (const key of FORBIDDEN_DRAFT_KEYS) {
-    if (Object.prototype.hasOwnProperty.call(draft, key)) {
-      return { ok: false, error: "parse_failed" };
-    }
-  }
-  // Mirror the assertion at the line-item level. The schema already
-  // rejects unknown keys on items via inner .strict(), so this is
-  // again defense in depth.
-  for (const item of draft.line_items) {
-    for (const key of FORBIDDEN_DRAFT_KEYS) {
-      if (Object.prototype.hasOwnProperty.call(item, key)) {
-        return { ok: false, error: "parse_failed" };
-      }
-    }
-  }
-  // Cross-check the AI's payload survives a second pass through the
-  // canonical schema. Any drift between the cached + live paths gets
-  // surfaced here as parse_failed rather than corrupting an INSERT.
-  const reparse = InvoiceDraftSchema.safeParse(draft);
-  if (!reparse.success) {
-    return { ok: false, error: "parse_failed" };
-  }
-
-  // 6. Validate the AI's client_id against the fetched list (in-memory).
-  const matchedClient = clients.find((c) => c.id === draft.client_id);
-  if (!matchedClient) {
-    return { ok: false, error: "unknown_client" };
-  }
-
-  // 7. Validate matter_id exists AND belongs to this client.
-  const matchedMatter = matters.find((m) => m.id === draft.matter_id);
-  if (!matchedMatter) {
-    return { ok: false, error: "unknown_matter" };
-  }
-  if (matchedMatter.client_id !== draft.client_id) {
-    return { ok: false, error: "unknown_matter" };
-  }
+  // Re-resolve the matched client AFTER validation so we can read its
+  // `preferred_language` for the INSERT. The validator only checks
+  // existence (the narrow `{ id }` shape); we still need the full row.
+  const matchedClient = clients.find((c) => c.id === draft.client_id)!;
 
   // 8. SERVER-SIDE totals. The AI proposes line items as
   // { description, quantity: number, unit_price: number }. We convert

@@ -1,0 +1,10 @@
+[
+  {
+    "type": "minor",
+    "task": 2,
+    "file": "tests/ai-concurrent-finalize.mjs",
+    "planned": "5 concurrent draftFromAIAction → finalizeInvoiceAction via HTTP+auth — assert AI-draft path under contention with 5 distinct sequential YYYY/NNNN numbers.",
+    "actual": "SP-level test retained — fetch /api/test/finalize-concurrent?n=5 (existing Phase 3 endpoint) — re-proves the allocate_invoice_number() SP gap-free invariant under parallel allocation. Adds a [deviation] banner at test start to flag the scope reduction at run time. The AI-draft → finalizeInvoiceAction chain is exercised end-to-end during Wave-2 manual verification + the pitch demo itself, but is NOT under automated contention here.",
+    "impact": "AC #2 SP correctness PASS (gap-free numbering under contention is the load-bearing invariant for Cyprus VAT). AC #2 AI-specific framing UNVERIFIED automatically. Acceptable risk: the AI write path uses the same finalizeInvoiceAction → allocate_invoice_number() SP path as the manual write path; the wrapper layer (auth + draft assembly in draftFromAIAction) has no concurrency point — race windows live in the SP. Verifier accepts SP-level fallback per Phase 5 gap-closure plan §Task 2 Action 5."
+  }
+]

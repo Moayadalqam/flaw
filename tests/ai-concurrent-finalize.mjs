@@ -63,6 +63,29 @@ const BASE = process.env.LEX_LOCAL_URL ?? "http://localhost:3000";
 const N = 5;
 
 async function main() {
+  // ─── Deviation banner (Phase 5 gap closure cycle 1) ───────────────────
+  // The plan-preferred path drives 5 concurrent `draftFromAIAction` calls
+  // (via an HTTP+auth wrapper endpoint) followed by 5 concurrent
+  // `finalizeInvoiceAction` calls, asserting 5 distinct sequential
+  // YYYY/NNNN numbers on the AI-draft path specifically. Implementing
+  // that requires wiring an authenticated Supabase session (cookie-based
+  // sb-...-auth-token) into a Node fetch harness AND adding two new test
+  // route handlers (`/api/test/ai-draft`, `/api/test/ai-finalize`) that
+  // must gate on NODE_ENV. Both pieces fit into Phase 5 scope but the
+  // gap-closure budget is tight — and the SP-level fallback is
+  // explicitly permitted by the plan with an entry in
+  // `.planning/phase-5-deviations.json`.
+  //
+  // The AI write path goes through the SAME `allocate_invoice_number`
+  // SP this endpoint exercises. The concurrency hazard is structurally
+  // in the SP, not in the AI path; the wrapper layer (auth + draft
+  // assembly) has no contention point. So this fallback re-proves the
+  // load-bearing invariant (gap-free numbering under parallel
+  // allocation) without exercising the AI-draft → finalize chain end
+  // to end.
+  console.log(
+    "[deviation] AC #2 scope reduced to SP-level concurrency; see .planning/phase-5-deviations.json",
+  );
   console.log(
     `Lex AI concurrent finalize — ${N} parallel allocations against ${BASE}/api/test/finalize-concurrent`,
   );

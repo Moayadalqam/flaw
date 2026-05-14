@@ -11,7 +11,7 @@
     "db:reset": "npx supabase db reset",
     "db:push": "npx supabase db push",
     "db:test": "npx supabase db reset && bash supabase/tests/run.sh",
-    "test:ai-injection": "DEMO_CACHE=true node tests/ai-injection.mjs",
+    "test:ai-injection": "DEMO_CACHE=true tsx tests/ai-injection.mjs",
     "test:ai-preflight": "DEMO_CACHE=true node tests/ai-preflight.mjs",
     "test:ai-concurrent": "DEMO_CACHE=true node tests/ai-concurrent-finalize.mjs"
   },
@@ -36,6 +36,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
     "tailwindcss": "^4",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }
