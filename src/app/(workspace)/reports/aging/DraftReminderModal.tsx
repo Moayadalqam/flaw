@@ -95,8 +95,9 @@ export function DraftReminderModal({
     } else {
       if (dialog.open) dialog.close();
       // Reset draft states on close so a re-open triggers a fresh
-      // sequence.
-      setStates({});
+      // sequence. Defer via microtask so the setState isn't synchronous
+      // inside the effect body.
+      queueMicrotask(() => setStates({}));
     }
   }, [open]);
 
@@ -117,19 +118,21 @@ export function DraftReminderModal({
     if (!open || rows.length === 0) return;
     let aborted = false;
 
-    // Seed every row's initial state synchronously — the missing-email
-    // ones short-circuit to a disabled card with no AI call.
-    const initial: Record<string, DraftState> = {};
-    for (const r of rows) {
-      if (!r.client_email) {
-        initial[r.id] = { status: "missing_email" };
-      } else {
-        initial[r.id] = { status: "loading" };
-      }
-    }
-    setStates(initial);
-
     void (async () => {
+      // Seed every row's initial state asynchronously — the missing-email
+      // ones short-circuit to a disabled card with no AI call. Moved
+      // inside the async IIFE so the setState is not synchronous within
+      // the effect body.
+      const initial: Record<string, DraftState> = {};
+      for (const r of rows) {
+        if (!r.client_email) {
+          initial[r.id] = { status: "missing_email" };
+        } else {
+          initial[r.id] = { status: "loading" };
+        }
+      }
+      setStates(initial);
+
       for (const r of rows) {
         if (aborted) return;
         if (!r.client_email) continue;
