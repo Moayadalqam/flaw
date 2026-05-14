@@ -76,11 +76,14 @@ import type {
   InvoiceDraftInput,
   MatterCtx,
   OpenRouterError,
+  ReminderClientCtx,
+  ReminderContext,
   WorkspaceSummary,
 } from "./types";
 import {
   buildDraftSystemPrompt,
   buildQuerySystemPrompt,
+  buildReminderSystemPrompt,
 } from "./prompts";
 
 // ---------------------------------------------------------------------------
@@ -190,6 +193,46 @@ function zodToJsonSchema(): Record<string, unknown> {
         },
       },
       due_days: { type: "integer", minimum: 0, maximum: 365 },
+    },
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Reminder schema (Phase 6)
+// ---------------------------------------------------------------------------
+
+/**
+ * Strict Zod schema for the reminder response. Mirrors the
+ * `InvoiceDraftSchema.strict()` defense-in-depth pattern: any extra key
+ * (amount_override, new_total, vat_rate, invoice_number, etc.) fails
+ * `safeParse` and the adapter returns `{ ok: false, error:
+ * 'parse_failed' }`. The bounds (subject ≤ 200, body ≤ 8000) bound the
+ * worst case so a runaway model cannot inject a megabyte of HTML.
+ */
+export const ReminderResponseSchema = z
+  .object({
+    subject: z.string().trim().min(1).max(200),
+    body_html: z.string().trim().min(1).max(8000),
+    body_text: z.string().trim().min(1).max(8000),
+  })
+  .strict();
+
+/**
+ * Hand-rolled JSON Schema mirror of `ReminderResponseSchema`. Same
+ * argument as `zodToJsonSchema`: one schema, 25 lines, no dep-skew risk
+ * from zod-to-json-schema chasing Zod v4. `additionalProperties: false`
+ * is the JSON-Schema equivalent of `.strict()` and is forwarded to the
+ * model's structured-output enforcement at decode time.
+ */
+function reminderJsonSchema(): Record<string, unknown> {
+  return {
+    type: "object",
+    additionalProperties: false,
+    required: ["subject", "body_html", "body_text"],
+    properties: {
+      subject: { type: "string", minLength: 1, maxLength: 200 },
+      body_html: { type: "string", minLength: 1, maxLength: 8000 },
+      body_text: { type: "string", minLength: 1, maxLength: 8000 },
     },
   };
 }
@@ -322,9 +365,9 @@ async function callModelOnce(
  *       (draft path) or return as text (query path). On parse failure,
  *       return `'parse_failed'`.
  */
-export async function callOpenRouter<K extends "draft" | "query">(
-  args: CallArgs & { kind: K },
-): Promise<CallResult<K>> {
+export async function callOpenRouter<
+  K extends "draft" | "query" | "reminder",
+>(args: CallArgs & { kind: K }): Promise<CallResult<K>> {
   // ─── 1. Cache check ───────────────────────────────────────────────
   const cached = lookupCache(args.text);
   if (process.env.DEMO_CACHE === "true" && cached) {
@@ -356,6 +399,21 @@ export async function callOpenRouter<K extends "draft" | "query">(
         name: "InvoiceDraft",
         strict: true,
         schema: zodToJsonSchema(),
+      },
+    };
+  } else if (args.kind === "reminder") {
+    const reminderArgs = args as CallArgs & { kind: "reminder" };
+    systemPrompt = buildReminderSystemPrompt(
+      reminderArgs.contextData.invoice,
+      reminderArgs.contextData.client,
+      reminderArgs.contextData.language,
+    );
+    responseFormat = {
+      type: "json_schema",
+      json_schema: {
+        name: "ReminderResponse",
+        strict: true,
+        schema: reminderJsonSchema(),
       },
     };
   } else {
@@ -461,6 +519,33 @@ export async function callOpenRouter<K extends "draft" | "query">(
     } as CallResult<K>;
   }
 
+  if (args.kind === "reminder") {
+    let parsedJson: unknown;
+    try {
+      parsedJson = JSON.parse(attempt.content);
+    } catch {
+      return {
+        ok: false,
+        error: "parse_failed",
+      } as CallResult<K>;
+    }
+
+    const safe = ReminderResponseSchema.safeParse(parsedJson);
+    if (!safe.success) {
+      return {
+        ok: false,
+        error: "parse_failed",
+      } as CallResult<K>;
+    }
+
+    return {
+      ok: true,
+      subject: safe.data.subject,
+      body_html: safe.data.body_html,
+      body_text: safe.data.body_text,
+    } as CallResult<K>;
+  }
+
   // Query path — prose response.
   return {
     ok: true,
@@ -472,7 +557,7 @@ export async function callOpenRouter<K extends "draft" | "query">(
 // Cache entry translation
 // ---------------------------------------------------------------------------
 
-function translateCacheEntry<K extends "draft" | "query">(
+function translateCacheEntry<K extends "draft" | "query" | "reminder">(
   kind: K,
   entry: DemoCacheEntry,
 ): CallResult<K> {
@@ -506,6 +591,29 @@ function translateCacheEntry<K extends "draft" | "query">(
     } as CallResult<K>;
   }
 
+  if (kind === "reminder" && entry.kind === "reminder") {
+    // Same defense-in-depth as the live reminder path — the cache file
+    // is hand-edited, so the strict schema also guards against
+    // hand-written extra keys creeping into demo-cache.json.
+    const safe = ReminderResponseSchema.safeParse({
+      subject: entry.subject,
+      body_html: entry.body_html,
+      body_text: entry.body_text,
+    });
+    if (!safe.success) {
+      return {
+        ok: false,
+        error: "parse_failed",
+      } as CallResult<K>;
+    }
+    return {
+      ok: true,
+      subject: safe.data.subject,
+      body_html: safe.data.body_html,
+      body_text: safe.data.body_text,
+    } as CallResult<K>;
+  }
+
   // Cache shape mismatched the requested kind — surface as parse_failed.
   return {
     ok: false,
@@ -525,5 +633,7 @@ export type {
   InvoiceDraftInput,
   MatterCtx,
   OpenRouterError,
+  ReminderClientCtx,
+  ReminderContext,
   WorkspaceSummary,
 };

@@ -267,5 +267,49 @@
     "discardConfirm": "Discard this draft? No invoice number will be consumed.",
     "watermarkLabel": "Preview — DRAFT watermark applies until finalized.",
     "previewLabel": "Preview"
+  },
+  "reports": {
+    "title": "Reports",
+    "summary": "Monthly summary",
+    "aging": "Aging report",
+    "monthSelector": "Month",
+    "revenueCard": "Total revenue",
+    "outstandingCard": "Outstanding",
+    "overdueCard": "Overdue",
+    "byCase": "By case",
+    "byClient": "By client",
+    "trustIsolationNote": "Trust balances are excluded from revenue figures.",
+    "noActivity": "No billing activity this month."
+  },
+  "aging": {
+    "title": "Aging report",
+    "bucket0to30": "0–30 days",
+    "bucket31to60": "31–60 days",
+    "bucket60Plus": "60+ days",
+    "clientCol": "Client",
+    "matterCol": "Case",
+    "invoiceCol": "Invoice",
+    "amountCol": "Amount",
+    "daysOverdueCol": "Days overdue",
+    "bucketTotal": "Bucket total",
+    "selectAllInBucket": "Select all in bucket",
+    "draftRemindersBtn": "Draft reminders with AI",
+    "noOverdueEmpty": "No overdue invoices. You're all caught up."
+  },
+  "reminders": {
+    "modalTitle": "Draft reminder",
+    "previewSubject": "Subject",
+    "previewBody": "Message preview",
+    "editBody": "Edit message",
+    "sendBtn": "Send reminder",
+    "sending": "Sending…",
+    "sent": "Reminder sent",
+    "errorNoApiKey": "Email service not configured — set RESEND_API_KEY.",
+    "errorRateLimit": "Too many sends — please wait a moment.",
+    "errorInvalidEmail": "Client email address is invalid.",
+    "errorProvider": "The email service returned an error.",
+    "errorNetwork": "Couldn't reach the email service.",
+    "clientMissingEmail": "Client has no email address — add one on the client card.",
+    "disclaimer": "AI drafted this reminder. Review before sending."
   }
 }

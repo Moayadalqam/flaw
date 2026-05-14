@@ -71,5 +71,29 @@
   "'; drop table invoices; --": {
     "kind": "refusal",
     "message": "Cannot parse request."
+  },
+  "reminder for 2026/0002 papadopoulou el": {
+    "kind": "reminder",
+    "subject": "Υπενθύμιση τιμολογίου 2026/0002 — οφειλόμενο ποσό €1.785,00",
+    "body_html": "<p>Αξιότιμη κυρία Παπαδοπούλου,</p><p>σας ενημερώνουμε ότι το τιμολόγιο 2026/0002 ποσού €1.785,00 παραμένει ανεξόφλητο 35 ημέρες μετά τη λήξη του στις 09/04/2026. Παρακαλούμε όπως μεριμνήσετε για την εξόφληση του οφειλόμενου ποσού εντός των επόμενων ημερών.</p><p>Με εκτίμηση,<br/>Φωτεινή Κανδρή, Δικηγόρος</p>",
+    "body_text": "Αξιότιμη κυρία Παπαδοπούλου,\n\nσας ενημερώνουμε ότι το τιμολόγιο 2026/0002 ποσού €1.785,00 παραμένει ανεξόφλητο 35 ημέρες μετά τη λήξη του στις 09/04/2026. Παρακαλούμε όπως μεριμνήσετε για την εξόφληση του οφειλόμενου ποσού εντός των επόμενων ημερών.\n\nΜε εκτίμηση,\nΦωτεινή Κανδρή, Δικηγόρος"
+  },
+  "reminder for 2026/0001 christodoulides en": {
+    "kind": "reminder",
+    "subject": "Reminder: Invoice 2026/0001 — outstanding €1,285.20",
+    "body_html": "<p>Dear Mr. Christodoulides,</p><p>We write to remind you that invoice 2026/0001 for €1,285.20 has been outstanding for 42 days past its due date of 02/04/2026. Kindly arrange settlement of the outstanding amount at your earliest convenience.</p><p>Yours faithfully,<br/>Fotini Kandri, Advocate</p>",
+    "body_text": "Dear Mr. Christodoulides,\n\nWe write to remind you that invoice 2026/0001 for €1,285.20 has been outstanding for 42 days past its due date of 02/04/2026. Kindly arrange settlement of the outstanding amount at your earliest convenience.\n\nYours faithfully,\nFotini Kandri, Advocate"
+  },
+  "reminder for 2026/0003 andreou el": {
+    "kind": "reminder",
+    "subject": "Υπενθύμιση τιμολογίου 2026/0003 — οφειλόμενο ποσό €1.904,00",
+    "body_html": "<p>Αξιότιμε κύριε Ανδρέου,</p><p>σας ενημερώνουμε ότι το τιμολόγιο 2026/0003 ποσού €1.904,00 για τον έλεγχο σύμβασης ακινήτου παραμένει ανεξόφλητο 18 ημέρες μετά τη λήξη του στις 26/04/2026. Παρακαλούμε όπως φροντίσετε για την εξόφληση του οφειλόμενου ποσού εντός της προθεσμίας.</p><p>Με εκτίμηση,<br/>Φωτεινή Κανδρή, Δικηγόρος</p>",
+    "body_text": "Αξιότιμε κύριε Ανδρέου,\n\nσας ενημερώνουμε ότι το τιμολόγιο 2026/0003 ποσού €1.904,00 για τον έλεγχο σύμβασης ακινήτου παραμένει ανεξόφλητο 18 ημέρες μετά τη λήξη του στις 26/04/2026. Παρακαλούμε όπως φροντίσετε για την εξόφληση του οφειλόμενου ποσού εντός της προθεσμίας.\n\nΜε εκτίμηση,\nΦωτεινή Κανδρή, Δικηγόρος"
+  },
+  "reminder for 2026/0004 konstantinou en": {
+    "kind": "reminder",
+    "subject": "Reminder: Invoice 2026/0004 — outstanding €642.60",
+    "body_html": "<p>Dear Mrs. Konstantinou,</p><p>We write to remind you that invoice 2026/0004 for €642.60 covering immigration consultation has been outstanding for 21 days past its due date of 23/04/2026. Kindly arrange settlement of the outstanding amount within the coming days.</p><p>Yours faithfully,<br/>Fotini Kandri, Advocate</p>",
+    "body_text": "Dear Mrs. Konstantinou,\n\nWe write to remind you that invoice 2026/0004 for €642.60 covering immigration consultation has been outstanding for 21 days past its due date of 23/04/2026. Kindly arrange settlement of the outstanding amount within the coming days.\n\nYours faithfully,\nFotini Kandri, Advocate"
   }
 }

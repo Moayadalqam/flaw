@@ -130,25 +130,92 @@ export interface QueryCallArgs {
   };
 }
 
-export type CallArgs = DraftCallArgs | QueryCallArgs;
+// ---------------------------------------------------------------------------
+// Reminder path (Phase 6)
+//
+// The reminder mode takes a finalized invoice + its client and asks the
+// model to compose a formal payment-reminder email in the client's
+// preferred language. The model receives the invoice number, total,
+// currency, due date, days overdue, and matter title as READ-ONLY
+// context. It must NOT propose new amounts/VAT/invoice numbers — the
+// `ReminderResponseSchema.strict()` in `client.ts` enforces this just
+// like `InvoiceDraftSchema.strict()` enforces the draft path's invariant.
+// ---------------------------------------------------------------------------
 
-export type CallResult<K extends "draft" | "query"> = K extends "draft"
-  ?
-      | { ok: true; draft: InvoiceDraftInput }
-      | { ok: false; error: OpenRouterError; message?: string }
-  :
-      | { ok: true; text: string }
-      | { ok: false; error: OpenRouterError; message?: string };
+/**
+ * The read-only invoice context handed to the reminder prompt. Every
+ * field is pre-computed by the upstream Server Action (Task 4); the AI
+ * paraphrases it in the chosen language and never recomputes any
+ * monetary value.
+ */
+export interface ReminderContext {
+  invoice_number: string;
+  total: string;
+  currency: string;
+  due_at: string;
+  days_overdue: number;
+  matter_title: string;
+}
+
+/**
+ * The minimal client context handed to the reminder prompt. We pass
+ * BOTH name spellings (so the model picks the correct one for the
+ * chosen language) plus the email for the greeting line — never the
+ * client's address, VAT number, or phone.
+ */
+export interface ReminderClientCtx {
+  name_el: string;
+  name_en: string;
+  email: string;
+  preferred_language: PreferredLanguage;
+}
+
+export interface ReminderCallArgs {
+  kind: "reminder";
+  text: string;
+  contextData: {
+    invoice: ReminderContext;
+    client: ReminderClientCtx;
+    language: PreferredLanguage;
+  };
+}
+
+export type CallArgs = DraftCallArgs | QueryCallArgs | ReminderCallArgs;
+
+export type CallResult<K extends "draft" | "query" | "reminder"> =
+  K extends "draft"
+    ?
+        | { ok: true; draft: InvoiceDraftInput }
+        | { ok: false; error: OpenRouterError; message?: string }
+    : K extends "query"
+      ?
+          | { ok: true; text: string }
+          | { ok: false; error: OpenRouterError; message?: string }
+      :
+          | {
+              ok: true;
+              subject: string;
+              body_html: string;
+              body_text: string;
+            }
+          | { ok: false; error: OpenRouterError; message?: string };
 
 // ---------------------------------------------------------------------------
-// Demo cache shape — the JSON map keyed by normalized prompt. Three
-// entry kinds: a cached draft success, a cached query answer, or a
-// cached refusal (used by Task 4's adversarial corpus).
+// Demo cache shape — the JSON map keyed by normalized prompt. Four
+// entry kinds: a cached draft success, a cached query answer, a cached
+// reminder email, or a cached refusal (used by Task 4's adversarial
+// corpus + Phase 5's prompt-injection regression set).
 // ---------------------------------------------------------------------------
 
 export type DemoCacheEntry =
   | { kind: "draft"; draft: InvoiceDraftInput }
   | { kind: "query"; text: string }
+  | {
+      kind: "reminder";
+      subject: string;
+      body_html: string;
+      body_text: string;
+    }
   | { kind: "refusal"; message: string };
 
 export type DemoCache = Record<string, DemoCacheEntry>;

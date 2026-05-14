@@ -23,9 +23,12 @@
  *   Server computes.
  */
 
+import type { PreferredLanguage } from "@/lib/types";
 import type {
   ClientCtx,
   MatterCtx,
+  ReminderClientCtx,
+  ReminderContext,
   WorkspaceSummary,
 } from "./types";
 
@@ -131,5 +134,98 @@ export function buildQuerySystemPrompt(
     "",
     "WORKSPACE SUMMARY (the only data you have):",
     JSON.stringify(workspaceSummary, null, 2),
+  ].join("\n");
+}
+
+// ---------------------------------------------------------------------------
+// Reminder system prompt (Phase 6)
+// ---------------------------------------------------------------------------
+
+/**
+ * Build the system prompt for the REMINDER path. Composes a formal
+ * payment-reminder email about an existing finalized invoice. The
+ * invoice context is injected as a READ-ONLY JSON block; the AI
+ * paraphrases it in the chosen language and never proposes new
+ * monetary figures.
+ *
+ * Constraints encoded in the prompt:
+ *   - Formal lawyer register (Greek: «παρακαλούμε», «οφειλόμενο ποσό»;
+ *     English: "kindly", "outstanding amount").
+ *   - Greeting matches `client.preferred_language` (Greek: "Αξιότιμη
+ *     κυρία / Αξιότιμε κύριε [name]"; English: "Dear Mr./Mrs./Ms.
+ *     [name]"). The model picks Greek-spelling or English-spelling of
+ *     the client name from the two name fields it receives.
+ *   - States the invoice number, total with VAT, days overdue, and due
+ *     date — all VERBATIM from the injected context.
+ *   - Closes with a polite payment request and the firm's signature
+ *     line ("Με εκτίμηση, [Firm]" / "Yours faithfully, [Firm]").
+ *   - Refuses if `invoice_number` is empty/null (drafts cannot be
+ *     reminded) or if `total <= 0` — surface via the refusal channel,
+ *     do not fabricate.
+ *   - AI MUST NOT propose new amounts, invoice_numbers, or VAT figures
+ *     — reminder describes the existing finalized invoice ONLY.
+ *
+ * Returns a single JSON object matching `{ subject, body_html,
+ * body_text }`. `body_html` is allowed to contain `<p>`, `<br/>`,
+ * `<strong>`, `<em>` — no `<script>`, no `<style>`, no external links.
+ */
+export function buildReminderSystemPrompt(
+  invoice: ReminderContext,
+  client: ReminderClientCtx,
+  language: PreferredLanguage,
+): string {
+  // Trim the client context to what the prompt actually needs — never
+  // pass through VAT numbers, phone, or address. Email is included so
+  // the model can reference the recipient implicitly but is told not to
+  // print it inside the body (the envelope already carries it).
+  const clientForModel = {
+    name_el: client.name_el,
+    name_en: client.name_en,
+    preferred_language: client.preferred_language,
+  };
+
+  const languageGuidance =
+    language === "el"
+      ? "Greek (formal lawyer register, use «παρακαλούμε», «οφειλόμενο ποσό», «προθεσμία», «Αξιότιμη/Αξιότιμε»). Sign off with «Με εκτίμηση,»."
+      : "English (formal register, use 'kindly', 'outstanding amount', 'due'). Sign off with 'Yours faithfully,'.";
+
+  const greetingGuidance =
+    language === "el"
+      ? "Begin with «Αξιότιμη κυρία [surname]» or «Αξιότιμε κύριε [surname]» using `name_el`."
+      : "Begin with 'Dear Mr./Mrs./Ms. [surname]' using `name_en`.";
+
+  return [
+    "You are Lex, a drafting assistant for a Cyprus law firm's invoicing system.",
+    "",
+    // Verbatim line required by the plan + Phase 6 hard rule. Audit greps
+    // for these exact substrings (same defense-in-depth pattern as the
+    // draft prompt's "AI MUST NOT propose" line).
+    "AI MUST NOT propose new amounts, invoice_numbers, or VAT figures — reminder describes the existing finalized invoice ONLY.",
+    "",
+    "You compose a payment-reminder email in formal register about an EXISTING finalized invoice.",
+    "You DO NOT compute VAT. You DO NOT allocate invoice numbers. You DO NOT change the total.",
+    "You restate the invoice number, total with VAT, days overdue, and due date VERBATIM from the JSON context below.",
+    "",
+    `Language: ${languageGuidance}`,
+    `Greeting: ${greetingGuidance}`,
+    "",
+    "Refuse (via the model's refusal channel) if:",
+    "  - `invoice_number` is empty, null, or missing (drafts cannot be reminded).",
+    "  - `total` parses to a value ≤ 0 (no outstanding amount).",
+    "",
+    "Output a SINGLE JSON object matching the ReminderResponse schema:",
+    "  {",
+    "    subject: string (1–200 chars; references the invoice number and outstanding amount),",
+    "    body_html: string (1–8000 chars; only <p>, <br/>, <strong>, <em> tags allowed),",
+    "    body_text: string (1–8000 chars; plain-text equivalent of body_html — no markup)",
+    "  }",
+    "",
+    "Do NOT include any other keys. Extra keys (amount_override, new_total, vat_rate, etc.) will cause a strict-schema rejection on the server.",
+    "",
+    "INVOICE (read-only — restate, do not modify):",
+    JSON.stringify(invoice),
+    "",
+    "CLIENT (use the name spelling matching `preferred_language`):",
+    JSON.stringify(clientForModel),
   ].join("\n");
 }
