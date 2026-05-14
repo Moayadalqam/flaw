@@ -244,6 +244,8 @@
   },
   "ai": {
     "askLex": "Ask Lex",
+    "launcherCta": "Ask Lex",
+    "launcherLabel": "Open the Lex assistant (⌘K)",
     "placeholderDraft": "Invoice Andreou for the divorce filing, €450, due in 14 days",
     "placeholderQuery": "Who is overdue?",
     "drafting": "Drafting…",
