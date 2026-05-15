@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   billToName: {
-    fontFamily: "Crimson Pro",
+    fontFamily: "Noto Sans",
     fontWeight: 600,
     fontSize: 14,
     color: LexPdfTokens.text,

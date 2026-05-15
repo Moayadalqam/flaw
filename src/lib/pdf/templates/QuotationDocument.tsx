@@ -149,8 +149,8 @@ const styles = StyleSheet.create({
   // (NOT kill — the design rubric is clear that this is a normal document,
   // not an error state).
   quotationCaption: {
-    fontFamily: "Crimson Pro",
-    fontWeight: 700,
+    fontFamily: "Noto Sans",
+    fontWeight: 600,
     fontSize: 10,
     letterSpacing: 0.9,
     color: LexPdfTokens.muted,
@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   billToName: {
-    fontFamily: "Crimson Pro",
+    fontFamily: "Noto Sans",
     fontWeight: 600,
     fontSize: 14,
     color: LexPdfTokens.text,
@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
     borderTopColor: LexPdfTokens.text,
   },
   totalsLabelFinal: {
-    fontFamily: "Crimson Pro",
+    fontFamily: "Noto Sans",
     fontWeight: 600,
     fontSize: 14,
     color: LexPdfTokens.text,

@@ -215,7 +215,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   billToName: {
-    fontFamily: "Crimson Pro",
+    fontFamily: "Noto Sans",
     fontWeight: 600,
     fontSize: 14,
     color: LexPdfTokens.text,
@@ -322,7 +322,7 @@ const styles = StyleSheet.create({
     borderTopColor: LexPdfTokens.text,
   },
   totalsLabelFinal: {
-    fontFamily: "Crimson Pro",
+    fontFamily: "Noto Sans",
     fontWeight: 600,
     fontSize: 14,
     color: LexPdfTokens.text,
@@ -394,8 +394,8 @@ const styles = StyleSheet.create({
     opacity: 0.1,
   },
   watermarkText: {
-    fontFamily: "Crimson Pro",
-    fontWeight: 700,
+    fontFamily: "Noto Sans",
+    fontWeight: 600,
     fontSize: 72,
     color: LexPdfTokens.kill,
     textAlign: "center",
