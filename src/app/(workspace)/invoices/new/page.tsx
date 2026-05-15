@@ -122,7 +122,7 @@ export default async function NewInvoicePage({
         {
           description,
           quantity,
-          unit_price: entry.hourly_rate,
+          unit_price: String(entry.hourly_rate ?? ""),
         },
       ];
       initialClientId = entry.matters.client_id;
