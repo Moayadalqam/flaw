@@ -48,7 +48,6 @@ const ITEMS: ReadonlyArray<NavItem> = [
   { href: "/quotations", key: "quotations", icon: FileCheck },
   { href: "/retainers", key: "retainers", icon: Wallet },
   { href: "/trust", key: "trust", icon: ShieldCheck, trust: true },
-  { href: "/ai", key: "assistant", icon: Sparkles },
   { href: "/reports", key: "reports", icon: BarChart3 },
 ];
 
