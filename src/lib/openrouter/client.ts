@@ -241,16 +241,31 @@ function reminderJsonSchema(): Record<string, unknown> {
 // Demo cache helpers
 // ---------------------------------------------------------------------------
 
-const demoCache: DemoCache = demoCacheRaw as DemoCache;
-
 /**
- * Normalize a free-text prompt to a cache-lookup key. Trim, lowercase,
- * collapse runs of whitespace. Keep punctuation — the cache keys in
- * `demo-cache.json` include the trailing `?` on queries.
+ * Normalize a free-text prompt to a cache-lookup key. Aggressive on
+ * punctuation + casing + whitespace so the demo cache survives the
+ * typical typing variations on the pitch laptop — `who's overdue?`,
+ * `Who is overdue`, `who is overdue ?` all collapse to the same key.
  */
 function normalizePrompt(text: string): string {
-  return text.trim().toLowerCase().replace(/\s+/g, " ");
+  return text
+    .trim()
+    .toLowerCase()
+    .replace(/[\u2018\u2019\u201A\u201B'`]/g, "")
+    .replace(/[?.!,;:]+/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
+
+// Re-key cache entries through the same normalizer so the JSON file can
+// keep human-readable keys (with apostrophes and question marks) while
+// the lookup tolerates variation.
+const demoCache: DemoCache = Object.fromEntries(
+  Object.entries(demoCacheRaw as DemoCache).map(([k, v]) => [
+    normalizePrompt(k),
+    v,
+  ]),
+) as DemoCache;
 
 function lookupCache(text: string): DemoCacheEntry | undefined {
   return demoCache[normalizePrompt(text)];

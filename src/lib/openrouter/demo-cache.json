@@ -95,5 +95,9 @@
     "subject": "Reminder: Invoice 2026/0004 — outstanding €642.60",
     "body_html": "<p>Dear Mrs. Konstantinou,</p><p>We write to remind you that invoice 2026/0004 for €642.60 covering immigration consultation has been outstanding for 21 days past its due date of 23/04/2026. Kindly arrange settlement of the outstanding amount within the coming days.</p><p>Yours faithfully,<br/>Fotini Kandri, Advocate</p>",
     "body_text": "Dear Mrs. Konstantinou,\n\nWe write to remind you that invoice 2026/0004 for €642.60 covering immigration consultation has been outstanding for 21 days past its due date of 23/04/2026. Kindly arrange settlement of the outstanding amount within the coming days.\n\nYours faithfully,\nFotini Kandri, Advocate"
+  },
+  "who is overdue": {
+    "kind": "query",
+    "text": "Two invoices are overdue: 2026/0002 for Papadopoulou (€1,785.00) and 2026/0001 for Christodoulides (€1,285.20). Consider sending payment reminders this week."
   }
 }
