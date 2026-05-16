@@ -25,10 +25,8 @@ export function LoginForm({ demoEnabled }: { demoEnabled: boolean }) {
     setError(null);
     startDemoTransition(async () => {
       const res = await demoSignInAction();
-      if (res.ok) {
-        window.location.href = res.url;
-        return;
-      }
+      // On success the server action throws NEXT_REDIRECT and the browser
+      // navigates to /dashboard; only error cases return.
       setError(res.error === "demo_disabled" ? t("error") : res.error);
       setState("error");
     });
