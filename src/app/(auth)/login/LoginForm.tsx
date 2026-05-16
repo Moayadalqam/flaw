@@ -2,62 +2,68 @@
 
 import { useState, useTransition } from "react";
 import type { FormEvent } from "react";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/client";
-import { demoSignInAction } from "./actions";
+import { demoSignInAction, passwordSignInAction } from "./actions";
 
-type FormState = "idle" | "sending" | "sent" | "error";
+type FormState = "idle" | "submitting" | "error";
 
 export function LoginForm({ demoEnabled }: { demoEnabled: boolean }) {
-  const isGreek = useLocale() === "el-CY";
   const t = useTranslations("login");
   const emailSchema = z
     .string()
     .min(5)
-    .regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, { message: "invalid email" });
+    .regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [state, setState] = useState<FormState>("idle");
   const [error, setError] = useState<string | null>(null);
+  const [submitting, startSubmitTransition] = useTransition();
   const [demoPending, startDemoTransition] = useTransition();
 
   function handleDemoSignIn() {
     setError(null);
     startDemoTransition(async () => {
       const res = await demoSignInAction();
-      // On success the server action throws NEXT_REDIRECT and the browser
-      // navigates to /dashboard; only error cases return.
-      setError(res.error === "demo_disabled" ? t("error") : res.error);
+      setError(res.error === "demo_disabled" ? t("error") : t("error"));
       setState("error");
     });
   }
 
-  async function submit(e: FormEvent<HTMLFormElement>) {
+  function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const parsed = emailSchema.safeParse(email);
-    if (!parsed.success) {
+
+    if (!emailSchema.safeParse(email).success) {
       setError(t("invalidEmail"));
       setState("error");
       return;
     }
-    setState("sending");
-    setError(null);
-    const supabase = createClient();
-    const { error: err } = await supabase.auth.signInWithOtp({
-      email: parsed.data,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
-    if (err) {
-      setError(err.message || t("error"));
+    if (password.length < 6) {
+      setError(t("invalidPassword"));
       setState("error");
       return;
     }
-    setState("sent");
+
+    setError(null);
+    setState("submitting");
+    const fd = new FormData();
+    fd.set("email", email);
+    fd.set("password", password);
+
+    startSubmitTransition(async () => {
+      const res = await passwordSignInAction(fd);
+      if (res.error === "invalid_credentials") {
+        setError(t("invalidCredentials"));
+      } else if (res.error === "invalid_input") {
+        setError(t("invalidEmail"));
+      } else {
+        setError(res.error || t("error"));
+      }
+      setState("error");
+    });
   }
 
-  const disabled = state === "sending" || state === "sent";
+  const inputsDisabled = submitting || demoPending;
 
   return (
     <form onSubmit={submit} className="space-y-5" noValidate>
@@ -78,7 +84,7 @@ export function LoginForm({ demoEnabled }: { demoEnabled: boolean }) {
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          disabled={disabled}
+          disabled={inputsDisabled}
           placeholder={t("emailPlaceholder")}
           aria-describedby={state === "error" ? "login-error" : undefined}
           className="w-full px-4 py-3 rounded-md transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:[outline-color:var(--accent)] focus-visible:[border-color:var(--accent)]"
@@ -91,35 +97,49 @@ export function LoginForm({ demoEnabled }: { demoEnabled: boolean }) {
         />
       </div>
 
-      {state === "sent" ? (
-        <div
-          role="status"
-          aria-live="polite"
-          className="rounded-md px-4 py-3 text-sm"
-          style={{
-            color: "var(--ok)",
-            background: "oklch(0.55 0.130 150 / 0.10)",
-            border: "1px solid oklch(0.55 0.130 150 / 0.25)",
-          }}
+      <div>
+        <label
+          htmlFor="password"
+          className="block text-[10px] uppercase tracking-widest mb-2"
+          style={{ color: "var(--dim)", letterSpacing: "0.08em" }}
         >
-          {t("checkInbox")}
-        </div>
-      ) : (
-        <button
-          type="submit"
-          disabled={state === "sending"}
-          className="w-full px-4 py-3 rounded-md font-medium transition-opacity focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:[outline-color:var(--accent)]"
+          {t("passwordLabel")}
+        </label>
+        <input
+          id="password"
+          name="password"
+          type="password"
+          autoComplete="current-password"
+          required
+          minLength={6}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          disabled={inputsDisabled}
+          aria-describedby={state === "error" ? "login-error" : undefined}
+          className="w-full px-4 py-3 rounded-md transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:[outline-color:var(--accent)] focus-visible:[border-color:var(--accent)]"
           style={{
-            background: "var(--accent)",
-            color: "var(--bg)",
+            border: "1px solid var(--line)",
+            background: "var(--bg)",
+            color: "var(--text)",
             minHeight: "44px",
-            opacity: state === "sending" ? 0.7 : 1,
-            cursor: state === "sending" ? "wait" : "pointer",
           }}
-        >
-          {state === "sending" ? t("sending") : t("send")}
-        </button>
-      )}
+        />
+      </div>
+
+      <button
+        type="submit"
+        disabled={submitting || demoPending}
+        className="w-full px-4 py-3 rounded-md font-medium transition-opacity focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:[outline-color:var(--accent)]"
+        style={{
+          background: "var(--accent)",
+          color: "var(--bg)",
+          minHeight: "44px",
+          opacity: submitting ? 0.7 : 1,
+          cursor: submitting ? "wait" : "pointer",
+        }}
+      >
+        {submitting ? t("sending") : t("send")}
+      </button>
 
       {state === "error" && error && (
         <div
@@ -137,7 +157,7 @@ export function LoginForm({ demoEnabled }: { demoEnabled: boolean }) {
         </div>
       )}
 
-      {demoEnabled && state !== "sent" && (
+      {demoEnabled && (
         <>
           <div
             className="relative flex items-center"
@@ -152,7 +172,7 @@ export function LoginForm({ demoEnabled }: { demoEnabled: boolean }) {
               className="px-3 text-[10px] uppercase tracking-widest"
               style={{ color: "var(--dim)", letterSpacing: "0.08em" }}
             >
-              {isGreek ? "ή" : "or"}
+              {t("demoOr")}
             </span>
             <div
               className="flex-grow"
@@ -162,7 +182,7 @@ export function LoginForm({ demoEnabled }: { demoEnabled: boolean }) {
           <button
             type="button"
             onClick={handleDemoSignIn}
-            disabled={demoPending}
+            disabled={submitting || demoPending}
             className="w-full px-4 py-3 rounded-md font-medium transition-opacity focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:[outline-color:var(--accent)]"
             style={{
               border: "1px solid var(--line)",
@@ -173,13 +193,7 @@ export function LoginForm({ demoEnabled }: { demoEnabled: boolean }) {
               cursor: demoPending ? "wait" : "pointer",
             }}
           >
-            {demoPending
-              ? isGreek
-                ? "Σύνδεση…"
-                : "Signing in…"
-              : isGreek
-                ? "Είσοδος demo (Fotini Kandri)"
-                : "Demo sign-in (Fotini Kandri)"}
+            {demoPending ? t("sending") : t("demoSignIn")}
           </button>
         </>
       )}
