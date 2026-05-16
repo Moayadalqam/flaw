@@ -10,7 +10,10 @@ type FormState = "idle" | "sending" | "sent" | "error";
 
 export function LoginForm() {
   const t = useTranslations("login");
-  const emailSchema = z.string().email().min(5);
+  const emailSchema = z
+    .string()
+    .min(5)
+    .regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, { message: "invalid email" });
   const [email, setEmail] = useState("");
   const [state, setState] = useState<FormState>("idle");
   const [error, setError] = useState<string | null>(null);
