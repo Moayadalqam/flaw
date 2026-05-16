@@ -6,7 +6,7 @@
  *
  * ─── EU routing strategy ──────────────────────────────────────────────
  *
- * Primary model:   `mistralai/mistral-large-latest`
+ * Primary model:   `mistralai/mistral-large-2512`
  *                  Selected because OpenRouter EU-routes Mistral by
  *                  default and Mistral's structured-output mode honours
  *                  JSON Schema. Acceptable latency + EU data residency.
@@ -94,7 +94,7 @@ const OPENROUTER_ENDPOINT =
   "https://openrouter.ai/api/v1/chat/completions";
 
 // Primary: Mistral Large (EU-routed by OpenRouter, structured-output capable).
-const PRIMARY_MODEL = "mistralai/mistral-large-latest";
+const PRIMARY_MODEL = "mistralai/mistral-large-2512";
 
 // Fallback: Claude Haiku — tried ONCE on a 5xx from Mistral, never on 4xx,
 // never on refusal.

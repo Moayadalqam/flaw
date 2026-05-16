@@ -62,7 +62,7 @@ Disable Vercel's GitHub auto-deploy (Qualia rule — see `~/.claude/rules/infras
 
 ## 7. AI model routing (OpenRouter)
 
-- Verify the configured model (`mistralai/mistral-large-latest` recommended for EU routing) responds to a structured-output test.
+- Verify the configured model (`mistralai/mistral-large-2512` recommended for EU routing) responds to a structured-output test.
 - If using a US-routed model (Claude, GPT), update the DPA disclosure document at `.planning/compliance/sub-processors.md` (created in Phase 6).
 
 ## 8. Deploy to production
@@ -100,7 +100,7 @@ Supabase project (created in §2-§4 above) and your existing `.env.local`.
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`    | yes      | Supabase Studio → Settings → API → anon/publishable   | Safe in client bundles.                                               |
 | `SUPABASE_SERVICE_ROLE_KEY`               | yes      | Supabase Studio → Settings → API → service_role       | Server-only. NEVER expose in client components.                       |
 | `OPENROUTER_API_KEY`                      | yes      | Your existing key (already in `.env.local`)           | Ask Fawzi if missing.                                                 |
-| `OPENROUTER_MODEL`                        | yes      | Literal: `mistralai/mistral-large-latest`             | EU-routed model. Pin for Cyprus Bar data residency.                   |
+| `OPENROUTER_MODEL`                        | yes      | Literal: `mistralai/mistral-large-2512`             | EU-routed model. Pin for Cyprus Bar data residency.                   |
 | `NEXT_PUBLIC_APP_URL`                     | yes      | Production URL after first deploy                     | Used in magic-link callback + email templates.                        |
 | `DEMO_CACHE`                              | **yes**  | Literal: `true`                                       | **Locked decision — see below.** Required because `RESEND_API_KEY` is NOT set in prod. |
 | `RESEND_API_KEY`                          | NO       | —                                                     | **Locked decision (2026-05-13): NOT set in production.** See below.   |
@@ -144,7 +144,7 @@ echo "https://${SUPABASE_REF}.supabase.co"     | vercel env add NEXT_PUBLIC_SUPA
 echo "${SUPABASE_ANON}"                        | vercel env add NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY production
 echo "${SUPABASE_SRK}"                         | vercel env add SUPABASE_SERVICE_ROLE_KEY production
 echo "${OR_KEY}"                               | vercel env add OPENROUTER_API_KEY production
-echo "mistralai/mistral-large-latest"          | vercel env add OPENROUTER_MODEL production
+echo "mistralai/mistral-large-2512"          | vercel env add OPENROUTER_MODEL production
 echo "${APP_URL}"                              | vercel env add NEXT_PUBLIC_APP_URL production
 echo "true"                                    | vercel env add DEMO_CACHE production
 echo "lex@qualiasolutions.cy"                  | vercel env add RESEND_FROM_EMAIL production
