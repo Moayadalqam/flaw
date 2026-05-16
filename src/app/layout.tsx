@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Crimson_Pro, Inter_Tight, JetBrains_Mono } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
-import { CommandBar } from "@/components/CommandBar";
 import "./globals.css";
 
 const crimsonPro = Crimson_Pro({
@@ -48,7 +47,6 @@ export default async function RootLayout({
       <body className="min-h-full flex flex-col">
         <NextIntlClientProvider locale={locale} messages={messages}>
           {children}
-          <CommandBar />
         </NextIntlClientProvider>
       </body>
     </html>

@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/Sidebar";
 import { TopBar } from "@/components/TopBar";
 import { ActiveTimerWidget } from "@/components/ActiveTimerWidget";
+import { CommandBar } from "@/components/CommandBar";
 
 export default async function WorkspaceLayout({
   children,
@@ -44,6 +45,7 @@ export default async function WorkspaceLayout({
           {children}
         </main>
       </div>
+      <CommandBar />
     </div>
   );
 }

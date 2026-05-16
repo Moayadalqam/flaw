@@ -51,7 +51,7 @@ export type AIDispatchResult =
 
 export type AIQueryResult =
   | { ok: true; text: string }
-  | { ok: false; error: OpenRouterError; message?: string };
+  | { ok: false; error: OpenRouterError | "no_workspace"; message?: string };
 
 // ---------------------------------------------------------------------------
 // aiQueryAction — natural-language question against workspace aggregates.
@@ -68,7 +68,7 @@ export async function aiQueryAction(text: string): Promise<AIQueryResult> {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    return { ok: false, error: "no_api_key" };
+    return { ok: false, error: "no_workspace" };
   }
 
   // Workspace ownership — RLS will filter the underlying SELECTs anyway,
@@ -81,7 +81,7 @@ export async function aiQueryAction(text: string): Promise<AIQueryResult> {
     .eq("owner_user_id", user.id)
     .maybeSingle();
   if (!ws) {
-    return { ok: false, error: "no_api_key" };
+    return { ok: false, error: "no_workspace" };
   }
 
   const result = await answerWorkspaceQuestion(trimmed, supabase);
