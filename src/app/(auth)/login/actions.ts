@@ -22,7 +22,7 @@ const DEMO_EMAIL = "fotini.placeholder@lex.local";
 export async function demoSignInAction(): Promise<
   { ok: true; url: string } | { ok: false; error: string }
 > {
-  if (process.env.DEMO_CACHE !== "true") {
+  if (process.env.DEMO_CACHE?.trim() !== "true") {
     return { ok: false, error: "demo_disabled" };
   }
 
