@@ -233,19 +233,13 @@
   "login": {
     "title": "Lex",
     "subtitle": "Sign in to your workspace.",
-    "emailLabel": "Email address",
-    "emailPlaceholder": "you@firm.cy",
-    "passwordLabel": "Password",
-    "send": "Sign in",
+    "accessCodeTitle": "Access code",
+    "accessCodeSubtitle": "Enter the 6-digit code to open the workspace.",
+    "enter": "Enter",
     "sending": "Signing in…",
-    "checkInbox": "Check your inbox. The magic link will land within 30 seconds.",
     "error": "Something went wrong. Please try again.",
-    "invalidEmail": "Please enter a valid email address.",
-    "invalidPassword": "Password must be at least 6 characters.",
-    "invalidCredentials": "Invalid email or password.",
-    "disclaimer": "Single-tenant workspace. Bilingual GR + EN.",
-    "demoSignIn": "Demo sign-in (Fotini Kandri)",
-    "demoOr": "or"
+    "invalidCode": "Invalid access code.",
+    "disclaimer": "Single-tenant workspace. Bilingual GR + EN."
   },
   "ai": {
     "askLex": "Ask Lex",

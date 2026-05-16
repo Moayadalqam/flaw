@@ -1,152 +1,189 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import type { FormEvent } from "react";
+import { useRef, useState, useTransition } from "react";
+import type { FormEvent, KeyboardEvent, ChangeEvent } from "react";
 import { useTranslations } from "next-intl";
-import { z } from "zod";
-import { demoSignInAction, passwordSignInAction } from "./actions";
+import { accessCodeSignInAction } from "./actions";
 
-type FormState = "idle" | "submitting" | "error";
+const CODE_LENGTH = 6;
 
-export function LoginForm({ demoEnabled }: { demoEnabled: boolean }) {
+export function LoginForm() {
   const t = useTranslations("login");
-  const emailSchema = z
-    .string()
-    .min(5)
-    .regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [state, setState] = useState<FormState>("idle");
+  const [digits, setDigits] = useState<string[]>(() =>
+    Array.from({ length: CODE_LENGTH }, () => ""),
+  );
   const [error, setError] = useState<string | null>(null);
-  const [submitting, startSubmitTransition] = useTransition();
-  const [demoPending, startDemoTransition] = useTransition();
+  const [pending, startTransition] = useTransition();
+  const inputsRef = useRef<Array<HTMLInputElement | null>>([]);
 
-  function handleDemoSignIn() {
-    setError(null);
-    startDemoTransition(async () => {
-      const res = await demoSignInAction();
-      setError(res.error === "demo_disabled" ? t("error") : t("error"));
-      setState("error");
+  const filled = digits.every((d) => d.length === 1);
+  const code = digits.join("");
+
+  function setDigit(i: number, value: string) {
+    setDigits((current) => {
+      const next = [...current];
+      next[i] = value.slice(-1);
+      return next;
     });
+  }
+
+  function handleChange(i: number, e: ChangeEvent<HTMLInputElement>) {
+    const raw = e.target.value.replace(/\D/g, "");
+    if (raw.length === 0) {
+      setDigit(i, "");
+      return;
+    }
+    if (raw.length === 1) {
+      setDigit(i, raw);
+      if (i < CODE_LENGTH - 1) {
+        inputsRef.current[i + 1]?.focus();
+      }
+      return;
+    }
+    // Multi-character: treat as a paste — distribute across cells from i.
+    setDigits((current) => {
+      const next = [...current];
+      for (let k = 0; k < raw.length && i + k < CODE_LENGTH; k++) {
+        next[i + k] = raw[k]!;
+      }
+      return next;
+    });
+    const lastIdx = Math.min(i + raw.length - 1, CODE_LENGTH - 1);
+    inputsRef.current[lastIdx]?.focus();
+  }
+
+  function handleKeyDown(i: number, e: KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Backspace") {
+      if (digits[i]) {
+        setDigit(i, "");
+        return;
+      }
+      if (i > 0) {
+        inputsRef.current[i - 1]?.focus();
+        setDigit(i - 1, "");
+      }
+      e.preventDefault();
+    } else if (e.key === "ArrowLeft" && i > 0) {
+      inputsRef.current[i - 1]?.focus();
+      e.preventDefault();
+    } else if (e.key === "ArrowRight" && i < CODE_LENGTH - 1) {
+      inputsRef.current[i + 1]?.focus();
+      e.preventDefault();
+    }
   }
 
   function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-
-    if (!emailSchema.safeParse(email).success) {
-      setError(t("invalidEmail"));
-      setState("error");
+    if (!filled) {
+      setError(t("invalidCode"));
       return;
     }
-    if (password.length < 6) {
-      setError(t("invalidPassword"));
-      setState("error");
-      return;
-    }
-
     setError(null);
-    setState("submitting");
     const fd = new FormData();
-    fd.set("email", email);
-    fd.set("password", password);
-
-    startSubmitTransition(async () => {
-      const res = await passwordSignInAction(fd);
-      if (res.error === "invalid_credentials") {
-        setError(t("invalidCredentials"));
-      } else if (res.error === "invalid_input") {
-        setError(t("invalidEmail"));
-      } else {
-        setError(res.error || t("error"));
-      }
-      setState("error");
+    fd.set("code", code);
+    startTransition(async () => {
+      const res = await accessCodeSignInAction(fd);
+      // Success → server redirected; only error cases return.
+      setError(
+        res.error === "invalid_code" ? t("invalidCode") : t("error"),
+      );
+      setDigits(Array.from({ length: CODE_LENGTH }, () => ""));
+      inputsRef.current[0]?.focus();
     });
   }
 
-  const inputsDisabled = submitting || demoPending;
-
   return (
-    <form onSubmit={submit} className="space-y-5" noValidate>
-      <div>
-        <label
-          htmlFor="email"
-          className="block text-[10px] uppercase tracking-widest mb-2"
-          style={{ color: "var(--dim)", letterSpacing: "0.08em" }}
-        >
-          {t("emailLabel")}
-        </label>
-        <input
-          id="email"
-          name="email"
-          type="email"
-          autoComplete="email"
-          inputMode="email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          disabled={inputsDisabled}
-          placeholder={t("emailPlaceholder")}
-          aria-describedby={state === "error" ? "login-error" : undefined}
-          className="w-full px-4 py-3 rounded-md transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:[outline-color:var(--accent)] focus-visible:[border-color:var(--accent)]"
+    <form onSubmit={submit} className="space-y-6" noValidate>
+      <div
+        className="flex flex-col items-center text-center gap-3"
+        style={{ marginBottom: "var(--space-2)" }}
+      >
+        <div
+          className="inline-flex items-center justify-center w-12 h-12 rounded-full"
           style={{
-            border: "1px solid var(--line)",
-            background: "var(--bg)",
-            color: "var(--text)",
-            minHeight: "44px",
+            background: "color-mix(in oklch, var(--accent) 12%, var(--bg))",
+            color: "var(--accent)",
           }}
-        />
+          aria-hidden="true"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path
+              d="M6 10V8a6 6 0 1 1 12 0v2M5 10h14a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1Z"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </div>
+        <div>
+          <p
+            className="font-display text-xl"
+            style={{ color: "var(--text)", letterSpacing: "-0.01em" }}
+          >
+            {t("accessCodeTitle")}
+          </p>
+          <p
+            className="text-sm mt-1"
+            style={{ color: "var(--muted)" }}
+          >
+            {t("accessCodeSubtitle")}
+          </p>
+        </div>
       </div>
 
-      <div>
-        <label
-          htmlFor="password"
-          className="block text-[10px] uppercase tracking-widest mb-2"
-          style={{ color: "var(--dim)", letterSpacing: "0.08em" }}
-        >
-          {t("passwordLabel")}
-        </label>
-        <input
-          id="password"
-          name="password"
-          type="password"
-          autoComplete="current-password"
-          required
-          minLength={6}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          disabled={inputsDisabled}
-          aria-describedby={state === "error" ? "login-error" : undefined}
-          className="w-full px-4 py-3 rounded-md transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:[outline-color:var(--accent)] focus-visible:[border-color:var(--accent)]"
-          style={{
-            border: "1px solid var(--line)",
-            background: "var(--bg)",
-            color: "var(--text)",
-            minHeight: "44px",
-          }}
-        />
+      <div className="flex justify-center gap-2 sm:gap-3" role="group" aria-label={t("accessCodeTitle")}>
+        {digits.map((d, i) => (
+          <input
+            key={i}
+            ref={(el) => {
+              inputsRef.current[i] = el;
+            }}
+            type="text"
+            inputMode="numeric"
+            autoComplete={i === 0 ? "one-time-code" : "off"}
+            pattern="\d*"
+            maxLength={CODE_LENGTH}
+            value={d}
+            onChange={(e) => handleChange(i, e)}
+            onKeyDown={(e) => handleKeyDown(i, e)}
+            onFocus={(e) => e.currentTarget.select()}
+            disabled={pending}
+            aria-label={`${t("accessCodeTitle")} ${i + 1} / ${CODE_LENGTH}`}
+            className="w-10 h-12 sm:w-12 sm:h-14 text-center font-display text-xl rounded-md transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:[outline-color:var(--accent)]"
+            style={{
+              border: "1px solid var(--line)",
+              background: "var(--bg)",
+              color: "var(--text)",
+            }}
+          />
+        ))}
       </div>
 
       <button
         type="submit"
-        disabled={submitting || demoPending}
+        disabled={!filled || pending}
         className="w-full px-4 py-3 rounded-md font-medium transition-opacity focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:[outline-color:var(--accent)]"
         style={{
-          background: "var(--accent)",
-          color: "var(--bg)",
+          background:
+            !filled || pending ? "var(--bg-2)" : "var(--accent)",
+          color: !filled || pending ? "var(--muted)" : "var(--bg)",
           minHeight: "44px",
-          opacity: submitting ? 0.7 : 1,
-          cursor: submitting ? "wait" : "pointer",
+          cursor: !filled || pending ? "not-allowed" : "pointer",
+          border:
+            !filled || pending
+              ? "1px solid var(--line)"
+              : "1px solid var(--accent)",
         }}
       >
-        {submitting ? t("sending") : t("send")}
+        {pending ? t("sending") : t("enter")}
       </button>
 
-      {state === "error" && error && (
+      {error && (
         <div
-          id="login-error"
           role="alert"
           aria-live="assertive"
-          className="rounded-md px-4 py-3 text-sm"
+          className="rounded-md px-4 py-3 text-sm text-center"
           style={{
             color: "var(--kill)",
             background: "oklch(0.52 0.180 25 / 0.06)",
@@ -155,47 +192,6 @@ export function LoginForm({ demoEnabled }: { demoEnabled: boolean }) {
         >
           {error}
         </div>
-      )}
-
-      {demoEnabled && (
-        <>
-          <div
-            className="relative flex items-center"
-            aria-hidden="true"
-            style={{ margin: "8px 0" }}
-          >
-            <div
-              className="flex-grow"
-              style={{ borderTop: "1px solid var(--line-soft)" }}
-            />
-            <span
-              className="px-3 text-[10px] uppercase tracking-widest"
-              style={{ color: "var(--dim)", letterSpacing: "0.08em" }}
-            >
-              {t("demoOr")}
-            </span>
-            <div
-              className="flex-grow"
-              style={{ borderTop: "1px solid var(--line-soft)" }}
-            />
-          </div>
-          <button
-            type="button"
-            onClick={handleDemoSignIn}
-            disabled={submitting || demoPending}
-            className="w-full px-4 py-3 rounded-md font-medium transition-opacity focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:[outline-color:var(--accent)]"
-            style={{
-              border: "1px solid var(--line)",
-              background: "var(--bg)",
-              color: "var(--text)",
-              minHeight: "44px",
-              opacity: demoPending ? 0.6 : 1,
-              cursor: demoPending ? "wait" : "pointer",
-            }}
-          >
-            {demoPending ? t("sending") : t("demoSignIn")}
-          </button>
-        </>
       )}
     </form>
   );
