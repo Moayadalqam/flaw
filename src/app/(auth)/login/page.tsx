@@ -32,7 +32,7 @@ export default async function LoginPage() {
           {t("subtitle")}
         </p>
       </div>
-      <LoginForm />
+      <LoginForm demoEnabled={process.env.DEMO_CACHE === "true"} />
       <p
         className="text-xs text-center mt-8"
         style={{ color: "var(--dim)" }}

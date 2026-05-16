@@ -1,14 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import type { FormEvent } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/client";
+import { demoSignInAction } from "./actions";
 
 type FormState = "idle" | "sending" | "sent" | "error";
 
-export function LoginForm() {
+export function LoginForm({ demoEnabled }: { demoEnabled: boolean }) {
+  const isGreek = useLocale() === "el-CY";
   const t = useTranslations("login");
   const emailSchema = z
     .string()
@@ -17,6 +19,20 @@ export function LoginForm() {
   const [email, setEmail] = useState("");
   const [state, setState] = useState<FormState>("idle");
   const [error, setError] = useState<string | null>(null);
+  const [demoPending, startDemoTransition] = useTransition();
+
+  function handleDemoSignIn() {
+    setError(null);
+    startDemoTransition(async () => {
+      const res = await demoSignInAction();
+      if (res.ok) {
+        window.location.href = res.url;
+        return;
+      }
+      setError(res.error === "demo_disabled" ? t("error") : res.error);
+      setState("error");
+    });
+  }
 
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -121,6 +137,53 @@ export function LoginForm() {
         >
           {error}
         </div>
+      )}
+
+      {demoEnabled && state !== "sent" && (
+        <>
+          <div
+            className="relative flex items-center"
+            aria-hidden="true"
+            style={{ margin: "8px 0" }}
+          >
+            <div
+              className="flex-grow"
+              style={{ borderTop: "1px solid var(--line-soft)" }}
+            />
+            <span
+              className="px-3 text-[10px] uppercase tracking-widest"
+              style={{ color: "var(--dim)", letterSpacing: "0.08em" }}
+            >
+              {isGreek ? "ή" : "or"}
+            </span>
+            <div
+              className="flex-grow"
+              style={{ borderTop: "1px solid var(--line-soft)" }}
+            />
+          </div>
+          <button
+            type="button"
+            onClick={handleDemoSignIn}
+            disabled={demoPending}
+            className="w-full px-4 py-3 rounded-md font-medium transition-opacity focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:[outline-color:var(--accent)]"
+            style={{
+              border: "1px solid var(--line)",
+              background: "var(--bg)",
+              color: "var(--text)",
+              minHeight: "44px",
+              opacity: demoPending ? 0.6 : 1,
+              cursor: demoPending ? "wait" : "pointer",
+            }}
+          >
+            {demoPending
+              ? isGreek
+                ? "Σύνδεση…"
+                : "Signing in…"
+              : isGreek
+                ? "Είσοδος demo (Fotini Kandri)"
+                : "Demo sign-in (Fotini Kandri)"}
+          </button>
+        </>
       )}
     </form>
   );
